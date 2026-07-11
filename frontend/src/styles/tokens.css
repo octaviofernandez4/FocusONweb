@@ -1,0 +1,41 @@
+/* src/styles/tokens.css
+   Variables de diseño de FocusOnWeb — extienden la paleta oscura ya existente en index.css */
+
+:root {
+  /* Fondo y superficies */
+  --bg-base: #0f172a;
+  --bg-surface: rgba(30, 41, 59, 0.7);
+  --bg-surface-solid: #1e293b;
+  --bg-surface-hover: rgba(30, 41, 59, 0.9);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+
+  /* Marca */
+  --color-indigo: #6366f1;
+  --color-indigo-light: #818cf8;
+  --color-pink: #ec4899;
+  --color-pink-light: #f472b6;
+  --gradient-brand: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-pink) 100%);
+  --gradient-text: linear-gradient(to right, var(--color-indigo-light), var(--color-pink-light));
+
+  /* Estado */
+  --color-success: #22c55e;
+  --color-success-bg: rgba(34, 197, 94, 0.12);
+  --color-danger: #ef4444;
+  --color-danger-bg: rgba(239, 68, 68, 0.12);
+  --color-warning: #f59e0b;
+
+  /* Texto */
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-muted: #94a3b8;
+
+  /* Tipografía */
+  --font-sans: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+
+  /* Radios y sombras */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-card: 0 10px 25px -10px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}

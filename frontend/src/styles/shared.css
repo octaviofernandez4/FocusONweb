@@ -1,0 +1,101 @@
+/* src/styles/shared.css — clases reutilizables entre páginas/componentes */
+
+.gradient-text {
+  background: var(--gradient-text);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.4rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-primary);
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  transform: scale(1.06);
+}
+
+.icon-btn.icon-btn-danger:hover {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.icon-btn.icon-btn-success:hover {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.icon-success { color: var(--color-success); }
+.icon-danger { color: var(--color-danger); }
+.icon-muted { color: var(--text-muted); }
+
+/* Pills de proyecto/etiqueta — las claves de color coinciden con src/utils/projectColors.js */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+
+.pill-neutral { background: rgba(255, 255, 255, 0.08); color: var(--text-secondary); }
+.pill-indigo { background: rgba(99, 102, 241, 0.16); color: #a5b4fc; }
+.pill-pink { background: rgba(236, 72, 153, 0.16); color: #f9a8d4; }
+.pill-emerald { background: rgba(16, 185, 129, 0.16); color: #6ee7b7; }
+.pill-amber { background: rgba(245, 158, 11, 0.16); color: #fcd34d; }
+.pill-sky { background: rgba(14, 165, 233, 0.16); color: #7dd3fc; }
+.pill-violet { background: rgba(139, 92, 246, 0.16); color: #c4b5fd; }
+.pill-rose { background: rgba(244, 63, 94, 0.16); color: #fda4af; }
+.pill-teal { background: rgba(20, 184, 166, 0.16); color: #5eead4; }
+
+.card-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2rem 1rem;
+}

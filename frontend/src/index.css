@@ -1,0 +1,227 @@
+/* src/index.css */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: var(--font-sans);
+}
+
+body {
+  /* Fondo oscuro con luces de neón difuminadas atrás */
+  background-color: var(--bg-base);
+  background-image:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
+    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Las páginas públicas (login/registro) siguen centrando su glass-card;
+   las páginas de la app autenticada (AppShell) ocupan todo el ancho. */
+.centered-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1.5rem;
+}
+
+/* Efecto Cristal (Glassmorphism) */
+.glass-card {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  animation: fadeIn 0.5s ease-out;
+}
+
+.glass-card h2 {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.8rem;
+  background: linear-gradient(to right, #818cf8, #f472b6);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Estilos de los Formularios */
+.form-group {
+  margin-bottom: 0.2rem; /* REDUCIDO: Ahora el espacio lo ocupa el error */
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.form-group input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  color: white;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.form-group input:focus {
+  border-color: #818cf8;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+/* NUEVO: Bordes rojos si hay error */
+.form-group input.input-error {
+  border-color: #ef4444;
+}
+
+.form-group input.input-error:focus {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+/* NUEVO: Espacio reservado para el texto de error (evita el salto) */
+.error-text {
+  color: #ef4444;
+  font-size: 0.8rem;
+  min-height: 20px; /* Este hueco siempre está, vacío o lleno */
+  margin-top: 5px;
+  margin-bottom: 5px;
+  display: block;
+}
+
+/* Botón principal super llamativo */
+.btn-primary {
+  width: 100%;
+  padding: 0.8rem;
+  margin-top: 0.5rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -10px rgba(236, 72, 153, 0.6);
+}
+
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* --- Tarjeta de autenticación (Login/Register) --- */
+.auth-card {
+  max-width: 420px;
+}
+
+.auth-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  font-size: 1.3rem;
+  margin-bottom: 0.3rem;
+}
+
+.auth-brand svg { color: var(--color-indigo-light); }
+
+.auth-tagline {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  margin-bottom: 1.8rem;
+}
+
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.link-disabled {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: not-allowed;
+}
+
+/* Input con icono a la izquierda */
+.input-with-icon {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 1rem;
+  border-radius: 10px;
+  color: var(--text-muted);
+  transition: all 0.3s ease;
+}
+
+.input-with-icon:focus-within {
+  border-color: #818cf8;
+  box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.input-with-icon.input-error {
+  border-color: #ef4444;
+}
+
+.input-with-icon.input-error:focus-within {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.input-with-icon input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 0.8rem 0;
+  color: white;
+  outline: none;
+}
+
+/* Links para cambiar entre Login y Registro */
+.form-footer {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.form-footer a {
+  color: #818cf8;
+  text-decoration: none;
+  font-weight: 600;
+  transition: color 0.3s;
+}
+
+.form-footer a:hover {
+  color: #f472b6;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
