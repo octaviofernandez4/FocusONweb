@@ -20,9 +20,8 @@
 }
 
 .landing-nav {
-  max-width: 1180px;
-  margin: 0 auto;
-  padding: 1.1rem 1.5rem;
+  width: 100%;
+  padding: 1.1rem 1.5rem 1.1rem 0.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -36,13 +35,13 @@
 }
 
 .landing-logo img {
-  height: 36px;
+  height: 58px;
   width: auto;
 }
 
 .landing-logo span {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: 1.85rem;
   letter-spacing: -0.01em;
   color: #3b82f6;
 }
