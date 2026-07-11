@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, Circle, ArrowRight, PlayCircle, Users, Layers, Gauge } from 'lucide-react';
+import logo from '../assets/focusonweb-logo.png';
 import './Landing.css';
 
 const previewTasks = [
@@ -30,19 +31,21 @@ const features = [
 const Landing = () => {
   return (
     <div className="landing">
-      <header className="landing-nav">
-        <div className="landing-logo">
-          <CheckCircle2 size={26} strokeWidth={2.4} />
-          <span>FocusOnWeb</span>
-        </div>
-        <nav className="landing-nav-links">
-          <a href="#funciones">Funciones</a>
-          <a href="#precios">Precios</a>
-          <a href="#comunidad">Comunidad</a>
-        </nav>
-        <div className="landing-nav-actions">
-          <Link to="/login" className="landing-link-btn">Ingresar</Link>
-          <Link to="/register" className="btn-primary landing-cta-small">Comenzar</Link>
+      <header className="landing-nav-wrapper">
+        <div className="landing-nav">
+          <div className="landing-logo">
+            <img src={logo} alt="FocusOnWeb" />
+            <span>FocusOnWeb</span>
+          </div>
+          <nav className="landing-nav-links">
+            <a href="#funciones">Funciones</a>
+            <a href="#precios">Precios</a>
+            <a href="#comunidad">Comunidad</a>
+          </nav>
+          <div className="landing-nav-actions">
+            <Link to="/login" className="landing-link-btn">Ingresar</Link>
+            <Link to="/register" className="btn-primary landing-cta-small">Comenzar</Link>
+          </div>
         </div>
       </header>
 
