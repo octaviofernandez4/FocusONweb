@@ -37,14 +37,9 @@ const Landing = () => {
             <img src={logo} alt="FocusOnWeb" />
             <span>FocusOnWeb</span>
           </div>
-          <nav className="landing-nav-links">
-            <a href="#funciones">Funciones</a>
-            <a href="#precios">Precios</a>
-            <a href="#comunidad">Comunidad</a>
-          </nav>
           <div className="landing-nav-actions">
-            <Link to="/login" className="landing-link-btn">Ingresar</Link>
-            <Link to="/register" className="btn-primary landing-cta-small">Comenzar</Link>
+            <Link to="/login" className="btn-ghost landing-nav-btn">Iniciar sesión</Link>
+            <Link to="/register" className="btn-primary landing-cta-small">Registrarse</Link>
           </div>
         </div>
       </header>
