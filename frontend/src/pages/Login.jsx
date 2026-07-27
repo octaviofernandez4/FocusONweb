@@ -1,11 +1,13 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, Lock, CheckCircle2 } from 'lucide-react';
+import { Mail, CheckCircle2 } from 'lucide-react';
 import { loginSchema } from '../schemas/authSchema';
 import { loginUser } from '../services/authService';
 import { joinOrg } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
+import PasswordField from '../components/PasswordField';
+import BackHomeButton from '../components/BackHomeButton';
 
 const Login = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
@@ -35,12 +37,13 @@ const Login = () => {
 
   return (
     <div className="centered-page">
+      <BackHomeButton />
       <div className="glass-card auth-card">
-        <div className="auth-brand">
-          <CheckCircle2 size={28} strokeWidth={2.4} />
-          <span>FocusOnWeb</span>
+        <div className="auth-icon-badge">
+          <CheckCircle2 size={26} strokeWidth={2.4} />
         </div>
-        <p className="auth-tagline">Encontrá tu foco. Dominá tu día.</p>
+        <h2 style={{ marginBottom: '0.3rem' }}>Bienvenido de nuevo</h2>
+        <p className="auth-tagline">Iniciá sesión en FocusOnWeb</p>
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="form-group">
@@ -61,14 +64,7 @@ const Login = () => {
               <label>Contraseña</label>
               <span className="link-disabled" title="Todavía no disponible">¿Olvidaste tu contraseña?</span>
             </div>
-            <div className={`input-with-icon ${errors.password ? 'input-error' : ''}`}>
-              <Lock size={17} />
-              <input
-                type="password"
-                placeholder="••••••••"
-                {...register('password')}
-              />
-            </div>
+            <PasswordField registration={register('password')} hasError={Boolean(errors.password)} />
             <span className="error-text">{errors.password?.message}</span>
           </div>
 

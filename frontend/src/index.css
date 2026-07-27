@@ -7,11 +7,12 @@
 }
 
 body {
-  /* Fondo oscuro con luces de neón difuminadas atrás */
+  /* Negro real con sombras/degradés de azul eléctrico difuminados atrás */
   background-color: var(--bg-base);
   background-image:
-    radial-gradient(circle at top left, rgba(99, 102, 241, 0.15) 0%, transparent 40%),
-    radial-gradient(circle at bottom right, rgba(236, 72, 153, 0.15) 0%, transparent 40%);
+    radial-gradient(circle at top left, var(--color-electric-glow) 0%, transparent 45%),
+    radial-gradient(circle at bottom right, rgba(10, 108, 255, 0.28) 0%, transparent 45%),
+    radial-gradient(circle at center, rgba(10, 108, 255, 0.1) 0%, transparent 60%);
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
@@ -33,7 +34,7 @@ body {
 
 /* Efecto Cristal (Glassmorphism) */
 .glass-card {
-  background: rgba(30, 41, 59, 0.7);
+  background: var(--bg-surface);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -41,7 +42,7 @@ body {
   padding: 2.5rem;
   width: 100%;
   max-width: 400px;
-  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   animation: fadeIn 0.5s ease-out;
 }
 
@@ -49,7 +50,7 @@ body {
   text-align: center;
   margin-bottom: 1.5rem;
   font-size: 1.8rem;
-  background: linear-gradient(to right, #818cf8, #f472b6);
+  background: var(--gradient-text);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -79,8 +80,8 @@ body {
 }
 
 .form-group input:focus {
-  border-color: #818cf8;
-  box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+  border-color: var(--color-electric-light);
+  box-shadow: 0 0 10px var(--color-electric-glow);
   background: rgba(15, 23, 42, 0.8);
 }
 
@@ -110,17 +111,20 @@ body {
   margin-top: 0.5rem;
   border: none;
   border-radius: 10px;
-  background: linear-gradient(135deg, #6366f1 0%, #ec4899 100%);
+  background: var(--gradient-brand);
   color: white;
   font-size: 1rem;
   font-weight: bold;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
   cursor: pointer;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 20px -10px rgba(236, 72, 153, 0.6);
+  box-shadow: 0 10px 24px -8px var(--color-electric-glow);
 }
 
 .btn-primary:disabled {
@@ -180,8 +184,8 @@ body {
 }
 
 .input-with-icon:focus-within {
-  border-color: #818cf8;
-  box-shadow: 0 0 10px rgba(129, 140, 248, 0.3);
+  border-color: var(--color-electric-light);
+  box-shadow: 0 0 10px var(--color-electric-glow);
   background: rgba(15, 23, 42, 0.8);
 }
 
@@ -191,6 +195,34 @@ body {
 
 .input-with-icon.input-error:focus-within {
   box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
+.password-toggle {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 0;
+}
+
+.password-toggle:hover {
+  color: var(--color-electric-light);
+}
+
+/* Ícono de marca redondeado (badge azul con check) */
+.auth-icon-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: var(--gradient-brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin: 0 auto 1rem;
+  box-shadow: 0 8px 20px -6px var(--color-electric-glow);
 }
 
 .input-with-icon input {
@@ -211,14 +243,14 @@ body {
 }
 
 .form-footer a {
-  color: #818cf8;
+  color: var(--color-electric-light);
   text-decoration: none;
   font-weight: 600;
   transition: color 0.3s;
 }
 
 .form-footer a:hover {
-  color: #f472b6;
+  color: var(--text-primary);
 }
 
 @keyframes fadeIn {

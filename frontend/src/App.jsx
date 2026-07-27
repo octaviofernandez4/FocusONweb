@@ -7,6 +7,7 @@ import TodayFocus from './pages/TodayFocus';
 import Inbox from './pages/Inbox';
 import Completed from './pages/Completed';
 import Settings from './pages/Settings';
+import EmployeeHome from './pages/EmployeeHome';
 // Importamos el guardia de seguridad y el layout de la app autenticada
 import ProtectedRoute from './routes/ProtectedRoute';
 import AppShell from './layouts/AppShell';
@@ -24,6 +25,8 @@ function App() {
 
       {/* Rutas Privadas (El Patovica las protege) */}
       <Route element={<ProtectedRoute />}>
+        {/* Destino temporal de las cuentas "Empleado" — panel real pendiente de construir */}
+        <Route path="/employee-home" element={<EmployeeHome />} />
         <Route path="/app" element={<AppShell />}>
           <Route index element={<Navigate to="today" replace />} />
           <Route path="today" element={<TodayFocus />} />

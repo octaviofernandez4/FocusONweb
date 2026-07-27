@@ -8,7 +8,7 @@ const ensureDefaultProject = require('../utils/ensureDefaultProject');
 // 1. Registrar un nuevo usuario (ahora con contraseña encriptada)
 const crearUsuario = async (req, res) => {
     try {
-        const { name, lastname, email, password, inviteToken } = req.body;
+        const { name, lastname, email, password, inviteToken, companyName } = req.body;
 
         // Verificamos si el correo ya está registrado para no tener duplicados
         const usuarioExiste = await User.findOne({ email });
@@ -38,7 +38,7 @@ const crearUsuario = async (req, res) => {
             await Membership.create({ org: organizacion._id, user: nuevoUsuario._id, role: 'member' });
         } else {
             organizacion = await Organization.create({
-                name: `Espacio de ${name}`,
+                name: companyName || `Espacio de ${name}`,
                 createdBy: nuevoUsuario._id
             });
             await Membership.create({ org: organizacion._id, user: nuevoUsuario._id, role: 'admin' });
