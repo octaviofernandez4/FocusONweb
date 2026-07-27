@@ -2,20 +2,27 @@
    Variables de diseño de FocusOnWeb — extienden la paleta oscura ya existente en index.css */
 
 :root {
-  /* Fondo y superficies */
-  --bg-base: #0f172a;
-  --bg-surface: rgba(30, 41, 59, 0.7);
-  --bg-surface-solid: #1e293b;
-  --bg-surface-hover: rgba(30, 41, 59, 0.9);
+  /* Fondo y superficies — negro real con base azulada sutil */
+  --bg-base: #030407;
+  --bg-surface: rgba(10, 16, 32, 0.75);
+  --bg-surface-solid: #0a1020;
+  --bg-surface-hover: rgba(14, 22, 44, 0.9);
   --border-subtle: rgba(255, 255, 255, 0.08);
 
-  /* Marca */
-  --color-indigo: #6366f1;
-  --color-indigo-light: #818cf8;
-  --color-pink: #ec4899;
-  --color-pink-light: #f472b6;
-  --gradient-brand: linear-gradient(135deg, var(--color-indigo) 0%, var(--color-pink) 100%);
-  --gradient-text: linear-gradient(to right, var(--color-indigo-light), var(--color-pink-light));
+  /* Marca — azul eléctrico */
+  --color-electric: #0a6cff;
+  --color-electric-light: #4f9dff;
+  --color-electric-dim: #0b3b8c;
+  --color-electric-glow: rgba(10, 108, 255, 0.45);
+
+  /* Alias legacy (compatibilidad con componentes existentes) */
+  --color-indigo: var(--color-electric);
+  --color-indigo-light: var(--color-electric-light);
+  --color-pink: var(--color-electric-light);
+  --color-pink-light: var(--color-electric-light);
+
+  --gradient-brand: linear-gradient(135deg, var(--color-electric) 0%, var(--color-electric-light) 100%);
+  --gradient-text: linear-gradient(to right, var(--color-electric-light), var(--color-electric));
 
   /* Estado */
   --color-success: #22c55e;
