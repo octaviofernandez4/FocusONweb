@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { User, Mail, Building2, CheckCircle2, ArrowRight } from 'lucide-react';
+import { User, Mail, Building2, UserRound, CheckCircle2, ArrowRight } from 'lucide-react';
 import { registerSchema } from '../schemas/authSchema';
 import { registerUser, loginUser } from '../services/authService';
 import { useAuth } from '../hooks/useAuth';
@@ -20,6 +21,11 @@ const Register = () => {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invite');
 
+  // Elegí si te registrás como empresa (creás tu organización) o como empleado
+  // (te van a sumar a una). Cada tipo termina en una página distinta.
+  const [accountType, setAccountType] = useState('empresa');
+  const esEmpresa = !inviteToken && accountType === 'empresa';
+
   const onSubmit = async (data) => {
     try {
       await registerUser({ ...data, inviteToken: inviteToken || undefined });
@@ -29,7 +35,7 @@ const Register = () => {
       const respuesta = await loginUser({ email: data.email, password: data.password });
       await login(respuesta.token);
 
-      navigate('/app/today');
+      navigate(esEmpresa ? '/app/today' : '/employee-home');
     } catch (error) {
       console.error('Error del backend:', error.response?.data);
       alert(error.response?.data?.mensaje || 'Hubo un error al registrarse');
@@ -57,6 +63,25 @@ const Register = () => {
           <p className="auth-tagline register-tagline">
             {inviteToken ? 'Creá tu cuenta para unirte a la organización' : 'Empezá a organizar tu equipo en minutos.'}
           </p>
+
+          {!inviteToken && (
+            <div className="account-type-toggle" role="group" aria-label="Tipo de cuenta">
+              <button
+                type="button"
+                className={accountType === 'empresa' ? 'is-active' : ''}
+                onClick={() => setAccountType('empresa')}
+              >
+                <Building2 size={16} /> Empresa
+              </button>
+              <button
+                type="button"
+                className={accountType === 'empleado' ? 'is-active' : ''}
+                onClick={() => setAccountType('empleado')}
+              >
+                <UserRound size={16} /> Empleado
+              </button>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <div className="register-row">
@@ -88,7 +113,7 @@ const Register = () => {
               <span className="error-text">{errors.email?.message}</span>
             </div>
 
-            {!inviteToken && (
+            {esEmpresa && (
               <div className="form-group">
                 <label>Nombre de la empresa</label>
                 <div className="input-with-icon">
