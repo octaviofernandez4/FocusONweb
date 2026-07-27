@@ -11,5 +11,6 @@ export const registerSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio ❌"),
   lastname: z.string().min(1, "El apellido es obligatorio ❌"),
   email: z.string().email("El email no es válido ❌"),
-  password: z.string().min(6, "La contraseña debe tener mínimo 6 caracteres ❌")
+  password: z.string().min(6, "La contraseña debe tener mínimo 6 caracteres ❌"),
+  companyName: z.string().optional()
 });
