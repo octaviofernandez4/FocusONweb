@@ -1,0 +1,11 @@
+.analytics-page h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.analytics-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.8rem;
+}
