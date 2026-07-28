@@ -8,7 +8,7 @@ const ensureDefaultProject = require('../utils/ensureDefaultProject');
 // 1. Registrar un nuevo usuario (ahora con contraseña encriptada)
 const crearUsuario = async (req, res) => {
     try {
-        const { name, lastname, email, password, inviteToken, companyName } = req.body;
+        const { name, lastname, email, password, inviteToken, companyName, accountType } = req.body;
 
         // Verificamos si el correo ya está registrado para no tener duplicados
         const usuarioExiste = await User.findOne({ email });
@@ -31,8 +31,10 @@ const crearUsuario = async (req, res) => {
         await nuevoUsuario.save();
 
         // Si vino un token de invitación válido, se une a esa organización como miembro.
-        // Si no, se le crea su propia organización personal y queda como admin.
+        // Si no, se le crea su propia organización personal (necesaria para que
+        // funcione el resto del backend) y queda como admin de ESA organización.
         let organizacion = inviteToken ? await Organization.findOne({ inviteToken }) : null;
+        const seUnioPorInvitacion = Boolean(organizacion);
 
         if (organizacion) {
             await Membership.create({ org: organizacion._id, user: nuevoUsuario._id, role: 'member' });
@@ -45,7 +47,11 @@ const crearUsuario = async (req, res) => {
             await ensureDefaultProject(organizacion._id, nuevoUsuario._id);
         }
 
+        // El tipo de cuenta (qué panel ve, si puede invitar) es independiente del
+        // rol técnico de Membership: quien se une por invitación siempre es
+        // "empleado"; si no, respeta lo que eligió en el formulario de registro.
         nuevoUsuario.currentOrg = organizacion._id;
+        nuevoUsuario.accountType = seUnioPorInvitacion ? 'empleado' : (accountType === 'empleado' ? 'empleado' : 'empresa');
         await nuevoUsuario.save();
 
         res.status(201).json({
@@ -99,7 +105,7 @@ const loginUsuario = async (req, res) => {
 // 3. Obtener el perfil del usuario autenticado
 const obtenerPerfil = async (req, res) => {
     try {
-        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg');
+        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType');
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
