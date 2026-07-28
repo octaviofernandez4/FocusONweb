@@ -48,9 +48,12 @@ describe('Sidebar', () => {
 
     await waitFor(() => expect(getCurrentOrg).toHaveBeenCalled());
 
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+    expect(screen.getByText('Mis tareas')).toBeInTheDocument();
     expect(screen.getByText('Hoy')).toBeInTheDocument();
-    expect(screen.getByText('Bandeja')).toBeInTheDocument();
+    expect(screen.getByText('Tareas del equipo')).toBeInTheDocument();
     expect(screen.getByText('Completadas')).toBeInTheDocument();
+    expect(screen.getByText('Analíticas')).toBeInTheDocument();
     expect(screen.getByText('Configuración')).toBeInTheDocument();
   });
 
