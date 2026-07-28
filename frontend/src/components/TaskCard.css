@@ -16,9 +16,14 @@
   border-color: rgba(129, 140, 248, 0.35);
 }
 
-.task-card.is-done {
+.task-card.is-completed {
   background: var(--color-success-bg);
   border-color: rgba(34, 197, 94, 0.25);
+}
+
+.task-card.is-review {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .task-card-tags {
@@ -35,6 +40,12 @@
 .task-card-title.is-done {
   text-decoration: line-through;
   color: var(--text-muted);
+}
+
+.task-card-assignee {
+  font-size: 0.76rem;
+  color: var(--color-electric-light);
+  font-weight: 600;
 }
 
 .task-card-desc {
