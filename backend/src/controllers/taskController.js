@@ -1,13 +1,29 @@
 const Task = require('../models/Task');
 const Membership = require('../models/Membership');
+const User = require('../models/User');
 const ensureDefaultProject = require('../utils/ensureDefaultProject');
 
-// 1. Crear tarea
+// 1. Crear tarea (solo cuenta empresa, ver requireCompanyAccount en la ruta)
 const crearTarea = async (req, res) => {
     try {
-        const { title, description, dueDate, priority, project } = req.body;
+        const { title, description, dueDate, priority, project, assignedToEmail } = req.body;
 
-        const proyecto = project || (await ensureDefaultProject(req.orgId, req.user.id))._id;
+        // "project" puede venir como ID crudo o como objeto populado ({_id, name, color})
+        const projectId = project && typeof project === 'object' ? project._id : project;
+        const proyecto = projectId || (await ensureDefaultProject(req.orgId, req.user.id))._id;
+
+        let assignedTo = null;
+        if (assignedToEmail) {
+            const miembroAsignado = await User.findOne({ email: assignedToEmail.toLowerCase().trim() });
+            if (!miembroAsignado) {
+                return res.status(404).json({ mensaje: 'No existe ningún usuario con ese email' });
+            }
+            const membresia = await Membership.findOne({ org: req.orgId, user: miembroAsignado._id });
+            if (!membresia) {
+                return res.status(400).json({ mensaje: 'Ese email no pertenece a nadie de tu organización' });
+            }
+            assignedTo = miembroAsignado._id;
+        }
 
         const nuevaTarea = new Task({
             title,
@@ -15,6 +31,7 @@ const crearTarea = async (req, res) => {
             dueDate,
             priority,
             project: proyecto,
+            assignedTo,
             user: req.user.id,
             org: req.orgId
         });
@@ -37,6 +54,7 @@ const obtenerTareas = async (req, res) => {
 
         const tareas = await Task.find(filtro)
             .populate('user', 'name lastname email')
+            .populate('assignedTo', 'name lastname email')
             .populate('project', 'name color')
             .sort({ dueDate: 1 });
 
@@ -76,7 +94,7 @@ const restaurarTareasCompletadas = async (req, res) => {
 
         await Task.updateMany(
             { org: req.orgId, completed: true },
-            { completed: false, completedAt: null }
+            { completed: false, completedAt: null, pendingReview: false }
         );
 
         await Task.updateMany(
@@ -111,35 +129,71 @@ const limpiarTareasCompletadas = async (req, res) => {
     }
 };
 
-// 6. Actualizar tarea (cualquier miembro de la organización)
+// 6. Actualizar tarea (cualquier miembro de la organización; confirmar/reabrir es solo admin)
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, completed, project, priority } = req.body;
-        const datosAActualizar = { title, description, dueDate, completed, project, priority };
+        const { title, description, dueDate, completed, pendingReview, project, priority, assignedToEmail } = req.body;
 
-        if (completed !== undefined) {
-            datosAActualizar.completedAt = completed ? new Date() : null;
-        }
-
-        const tareaActualizada = await Task.findOneAndUpdate(
-            { _id: id, org: req.orgId },
-            datosAActualizar,
-            { new: true }
-        );
-
-        if (!tareaActualizada) {
+        const tarea = await Task.findOne({ _id: id, org: req.orgId });
+        if (!tarea) {
             return res.status(404).json({ mensaje: 'La tarea no existe en esta organización 🛑' });
         }
 
-        res.status(200).json({ mensaje: '✏️ Tarea actualizada con éxito', tarea: tareaActualizada });
+        // Campos que cualquier miembro puede editar libremente
+        if (title !== undefined) tarea.title = title;
+        if (description !== undefined) tarea.description = description;
+        if (dueDate !== undefined) tarea.dueDate = dueDate;
+        if (project !== undefined) tarea.project = project && typeof project === 'object' ? project._id : project;
+        if (priority !== undefined) tarea.priority = priority;
+
+        if (assignedToEmail !== undefined) {
+            if (!assignedToEmail) {
+                tarea.assignedTo = null;
+            } else {
+                const miembroAsignado = await User.findOne({ email: assignedToEmail.toLowerCase().trim() });
+                const membresia = miembroAsignado && await Membership.findOne({ org: req.orgId, user: miembroAsignado._id });
+                if (!miembroAsignado || !membresia) {
+                    return res.status(400).json({ mensaje: 'Ese email no pertenece a nadie de tu organización' });
+                }
+                tarea.assignedTo = miembroAsignado._id;
+            }
+        }
+
+        // "completed" solo lo puede tocar una cuenta de empresa: confirma (true) o reabre (false) una tarea.
+        // Comparamos contra el valor guardado para no bloquear guardados normales que
+        // reenvían el mismo valor de "completed" sin intención de cambiarlo.
+        if (completed !== undefined && completed !== tarea.completed) {
+            const solicitante = await User.findById(req.user.id).select('accountType');
+            if (!solicitante || solicitante.accountType !== 'empresa') {
+                return res.status(403).json({ mensaje: 'Solo una cuenta de empresa puede confirmar o reabrir una tarea 🛑' });
+            }
+            tarea.completed = completed;
+            tarea.completedAt = completed ? new Date() : null;
+            tarea.pendingReview = false;
+        } else if (pendingReview !== undefined && pendingReview !== tarea.pendingReview) {
+            // Solo la persona a la que se le asignó la tarea puede marcarla lista para revisión
+            // (o desmarcarla) — nadie puede tocar la tarea de otro compañero.
+            const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
+            if (!esAsignatario) {
+                const solicitante = await User.findById(req.user.id).select('accountType');
+                if (!solicitante || solicitante.accountType !== 'empresa') {
+                    return res.status(403).json({ mensaje: 'Solo la persona asignada puede marcar esta tarea como lista 🛑' });
+                }
+            }
+            tarea.pendingReview = pendingReview;
+        }
+
+        await tarea.save();
+
+        res.status(200).json({ mensaje: '✏️ Tarea actualizada con éxito', tarea });
     } catch (error) {
         console.error(error);
         res.status(500).json({ mensaje: 'Error al actualizar la tarea', error: error.message });
     }
 };
 
-// 7. Borrar tarea (solo quien la creó o un admin de la organización)
+// 7. Borrar tarea (solo cuenta empresa — ningún empleado puede borrar tareas, ni siquiera las propias)
 const borrarTarea = async (req, res) => {
     try {
         const { id } = req.params;
@@ -149,13 +203,9 @@ const borrarTarea = async (req, res) => {
             return res.status(404).json({ mensaje: 'La tarea no existe en esta organización 🛑' });
         }
 
-        const esCreador = tarea.user.equals(req.user.id);
-
-        if (!esCreador) {
-            const membresia = await Membership.findOne({ org: req.orgId, user: req.user.id });
-            if (!membresia || membresia.role !== 'admin') {
-                return res.status(403).json({ mensaje: 'Solo quien creó la tarea o un admin puede borrarla 🛑' });
-            }
+        const solicitante = await User.findById(req.user.id).select('accountType');
+        if (!solicitante || solicitante.accountType !== 'empresa') {
+            return res.status(403).json({ mensaje: 'Solo una cuenta de empresa puede eliminar tareas 🛑' });
         }
 
         await tarea.deleteOne();
