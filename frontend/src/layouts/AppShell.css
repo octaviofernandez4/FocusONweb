@@ -21,3 +21,22 @@
     padding: 1.5rem;
   }
 }
+
+/* Layout de la cuenta empresa: sin sidebar, navbar horizontal arriba */
+.company-app-shell {
+  min-height: 100vh;
+  width: 100%;
+}
+
+.company-app-shell-content {
+  max-width: 1280px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 2.2rem 2.5rem;
+}
+
+@media (max-width: 900px) {
+  .company-app-shell-content {
+    padding: 1.5rem;
+  }
+}
