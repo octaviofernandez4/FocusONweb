@@ -20,7 +20,7 @@ const JoinInvite = () => {
 
       try {
         await joinOrg(token);
-        navigate('/app/today', { replace: true });
+        navigate('/app/dashboard', { replace: true });
       } catch (err) {
         console.error(err);
         setError(err.response?.data?.mensaje || 'El link de invitación no es válido o ya expiró');
