@@ -12,6 +12,7 @@ const {
 const authMiddleware = require('../middlewares/authMiddleware');
 const orgMiddleware = require('../middlewares/orgMiddleware');
 const requireOrgAdmin = require('../middlewares/requireOrgAdmin');
+const requireCompanyAccount = require('../middlewares/requireCompanyAccount');
 const { validarOrganizacion } = require('../validators/orgValidator');
 
 // --- RUTAS DE ORGANIZACIÓN ---
@@ -19,7 +20,7 @@ const { validarOrganizacion } = require('../validators/orgValidator');
 router.get('/me', authMiddleware, orgMiddleware, obtenerOrganizacionActual);
 router.put('/me', authMiddleware, orgMiddleware, requireOrgAdmin, validarOrganizacion, actualizarOrganizacion);
 router.get('/me/members', authMiddleware, orgMiddleware, listarMiembros);
-router.post('/me/invite', authMiddleware, orgMiddleware, requireOrgAdmin, generarInvitacion);
+router.post('/me/invite', authMiddleware, orgMiddleware, requireCompanyAccount, requireOrgAdmin, generarInvitacion);
 
 // Unirse a una organización distinta mediante un link de invitación
 router.post('/join/:token', authMiddleware, unirseAOrganizacion);

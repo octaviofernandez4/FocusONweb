@@ -3,11 +3,15 @@ import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import JoinInvite from './pages/JoinInvite';
+import Dashboard from './pages/Dashboard';
+import MyTasks from './pages/MyTasks';
 import TodayFocus from './pages/TodayFocus';
 import Inbox from './pages/Inbox';
 import Completed from './pages/Completed';
+import Projects from './pages/Projects';
+import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
-import EmployeeHome from './pages/EmployeeHome';
+import NotificationsCenter from './pages/NotificationsCenter';
 // Importamos el guardia de seguridad y el layout de la app autenticada
 import ProtectedRoute from './routes/ProtectedRoute';
 import AppShell from './layouts/AppShell';
@@ -25,14 +29,17 @@ function App() {
 
       {/* Rutas Privadas (El Patovica las protege) */}
       <Route element={<ProtectedRoute />}>
-        {/* Destino temporal de las cuentas "Empleado" — panel real pendiente de construir */}
-        <Route path="/employee-home" element={<EmployeeHome />} />
         <Route path="/app" element={<AppShell />}>
-          <Route index element={<Navigate to="today" replace />} />
+          <Route index element={<Navigate to="dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="mytasks" element={<MyTasks />} />
           <Route path="today" element={<TodayFocus />} />
           <Route path="inbox" element={<Inbox />} />
           <Route path="completed" element={<Completed />} />
+          <Route path="projects" element={<Projects />} />
+          <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />
+          <Route path="notifications" element={<NotificationsCenter />} />
         </Route>
       </Route>
 

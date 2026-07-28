@@ -19,6 +19,10 @@ const profileSchema = z.object({
 const Settings = () => {
   const { user, refreshProfile } = useAuth();
   const { org, isAdmin, refreshOrg } = useOrg();
+  // La invitación es solo para cuentas "empresa" — un empleado autoregistrado
+  // sin invitación es técnicamente admin de su propia org placeholder, pero
+  // no por eso debe ver la opción de invitar (el backend también lo bloquea).
+  const esEmpresa = user?.accountType === 'empresa';
   const [members, setMembers] = useState([]);
   const [inviteUrl, setInviteUrl] = useState('');
   const [copied, setCopied] = useState(false);
@@ -136,7 +140,7 @@ const Settings = () => {
             )}
           </form>
 
-          {isAdmin && (
+          {esEmpresa && (
             <div className="settings-invite">
               <button type="button" className="btn-ghost" onClick={handleGenerateInvite}>
                 <Link2 size={16} /> Generar link de invitación

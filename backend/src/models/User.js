@@ -31,6 +31,16 @@ const userSchema = new mongoose.Schema({
         type: String,
         default: 'Enfocado',
         trim: true
+    },
+    // Qué tipo de cuenta eligió al registrarse: 'empresa' funda/administra su
+    // organización, 'empleado' pertenece a la de alguien más. Es independiente
+    // del rol en Membership porque un empleado sin invitación todavía necesita
+    // una organización propia "placeholder" por debajo (así funciona el resto
+    // del backend), pero no por eso debe verse/actuar como empresa.
+    accountType: {
+        type: String,
+        enum: ['empresa', 'empleado'],
+        default: 'empresa'
     }
 }, {
     // Esto es un toque pro: agrega automáticamente la fecha de creación y actualización

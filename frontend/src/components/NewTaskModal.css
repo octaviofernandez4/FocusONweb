@@ -1,0 +1,77 @@
+.new-task-modal-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: -0.8rem 0 1.6rem;
+}
+
+.new-task-modal-form .form-group {
+  margin-bottom: 1.2rem;
+}
+
+.new-task-modal-textarea,
+.new-task-modal-select {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.85rem 1.1rem;
+  border-radius: 10px;
+  color: white;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.new-task-modal-textarea:focus,
+.new-task-modal-select:focus {
+  border-color: var(--color-electric-light);
+  box-shadow: 0 0 10px var(--color-electric-glow);
+}
+
+.new-task-modal-dropzone {
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 1.6rem 1rem;
+  text-align: center;
+  color: var(--text-muted);
+  background: rgba(15, 23, 42, 0.4);
+  cursor: not-allowed;
+}
+
+.new-task-modal-dropzone svg {
+  color: var(--color-electric-light);
+  margin-bottom: 0.6rem;
+  opacity: 0.7;
+}
+
+.new-task-modal-dropzone p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.2rem;
+}
+
+.new-task-modal-dropzone span {
+  font-size: 0.75rem;
+}
+
+.new-task-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 1.6rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.new-task-modal-actions .btn-ghost {
+  width: auto;
+  padding: 0.7rem 1.3rem;
+  font-size: 0.9rem;
+}
+
+.new-task-modal-submit {
+  width: auto;
+  margin-top: 0;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.9rem;
+}

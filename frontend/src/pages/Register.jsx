@@ -21,21 +21,22 @@ const Register = () => {
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invite');
 
-  // Elegí si te registrás como empresa (creás tu organización) o como empleado
-  // (te van a sumar a una). Cada tipo termina en una página distinta.
+  // Elegí si te registrás como empresa (creás tu organización) o como empleado.
+  // El dashboard post-login ya se adapta solo según el rol real (admin/miembro),
+  // así que ambos caminos terminan en /app/dashboard.
   const [accountType, setAccountType] = useState('empresa');
   const esEmpresa = !inviteToken && accountType === 'empresa';
 
   const onSubmit = async (data) => {
     try {
-      await registerUser({ ...data, inviteToken: inviteToken || undefined });
+      await registerUser({ ...data, inviteToken: inviteToken || undefined, accountType });
 
       // Registrarse no devuelve token; iniciamos sesión automáticamente para no pedirle
       // al usuario que vuelva a escribir sus credenciales.
       const respuesta = await loginUser({ email: data.email, password: data.password });
       await login(respuesta.token);
 
-      navigate(esEmpresa ? '/app/today' : '/employee-home');
+      navigate('/app/dashboard');
     } catch (error) {
       console.error('Error del backend:', error.response?.data);
       alert(error.response?.data?.mensaje || 'Hubo un error al registrarse');
