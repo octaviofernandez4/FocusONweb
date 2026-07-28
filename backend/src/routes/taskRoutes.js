@@ -18,6 +18,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 // Middleware de organización: resuelve la organización activa del usuario
 const orgMiddleware = require('../middlewares/orgMiddleware');
 const requireOrgAdmin = require('../middlewares/requireOrgAdmin');
+const requireCompanyAccount = require('../middlewares/requireCompanyAccount');
 
 // Validador de tareas: Asegura que el título y la descripción no estén vacíos [cite: 92-94]
 const { validarTarea } = require('../validators/taskValidator');
@@ -25,8 +26,8 @@ const { validarTarea } = require('../validators/taskValidator');
 // --- RUTAS DE TAREAS ---
 // Importante: las rutas estáticas (/stats, /restore-all, /clear-all) van ANTES de /:id
 
-// Ruta para crear (POST): Requiere estar logueado y pasar las validaciones de campos [cite: 158-159]
-router.post('/', authMiddleware, orgMiddleware, validarTarea, crearTarea);
+// Ruta para crear (POST): solo cuenta empresa puede asignar tareas nuevas
+router.post('/', authMiddleware, orgMiddleware, requireCompanyAccount, validarTarea, crearTarea);
 
 // Ruta para leer (GET): Devuelve las tareas de toda la organización del usuario autenticado [cite: 156-157]
 router.get('/', authMiddleware, orgMiddleware, obtenerTareas);
