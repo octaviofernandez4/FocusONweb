@@ -1,0 +1,105 @@
+.projects-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+}
+
+.projects-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+}
+
+.projects-header-actions {
+  display: flex;
+  gap: 0.7rem;
+  flex-wrap: wrap;
+}
+
+.projects-new-btn {
+  width: auto;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  font-size: 0.85rem;
+}
+
+.projects-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-bottom: 1.4rem;
+}
+
+.project-chip-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.4);
+}
+
+.project-chip-wrapper.is-active {
+  background: rgba(10, 108, 255, 0.12);
+}
+
+.project-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.project-chip-wrapper .project-chip {
+  border: none;
+  background: transparent;
+  padding: 0.4rem 0.2rem 0.4rem 0.8rem;
+}
+
+.project-chip:hover {
+  color: var(--text-primary);
+}
+
+.projects-chips > .project-chip.is-active {
+  background: var(--gradient-brand);
+  color: white;
+  border-color: transparent;
+}
+
+.project-chip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.project-chip-actions {
+  display: flex;
+  gap: 0.15rem;
+  padding-right: 0.4rem;
+}
+
+.project-chip-actions .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
