@@ -28,7 +28,7 @@ const Login = () => {
         await joinOrg(inviteToken);
       }
 
-      navigate('/app/today');
+      navigate('/app/dashboard');
     } catch (error) {
       console.error('Error del backend:', error.response?.data);
       alert(error.response?.data?.mensaje || 'Error al iniciar sesión. Revisá tus datos.');
