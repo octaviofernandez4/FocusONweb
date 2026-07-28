@@ -21,15 +21,26 @@ const taskSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    pendingReview: {
+        type: Boolean,
+        default: false
+    },
     priority: {
         type: String,
         enum: ['low', 'medium', 'high'],
         default: 'medium'
     },
     user: {
+        // Quién creó la tarea (siempre una cuenta empresa, ver crearTarea)
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
         required: true
+    },
+    assignedTo: {
+        // A quién se le asignó la tarea (opcional — puede quedar sin asignar)
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'User',
+        default: null
     },
     org: {
         type: mongoose.Schema.Types.ObjectId,
