@@ -102,7 +102,8 @@ const unirseAOrganizacion = async (req, res) => {
             { upsert: true, new: true }
         );
 
-        await User.findByIdAndUpdate(req.user.id, { currentOrg: organizacion._id });
+        // Unirse a una organización de otro siempre te marca como "empleado"
+        await User.findByIdAndUpdate(req.user.id, { currentOrg: organizacion._id, accountType: 'empleado' });
 
         res.status(200).json({ mensaje: `🎉 Te uniste a ${organizacion.name}`, organizacion });
     } catch (error) {
