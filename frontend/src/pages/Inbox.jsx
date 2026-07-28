@@ -1,21 +1,42 @@
-import { useState, useEffect, useCallback } from 'react';
-import { getTasks, updateTask, deleteTask } from '../services/taskService';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Search, Plus, FileDown, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
-import { useOrg } from '../hooks/useOrg';
-import { canDeleteTask } from '../utils/taskPermissions';
-import TaskCard from '../components/TaskCard';
+import { getTaskAccess } from '../utils/taskAccess';
+import { getProjectColor } from '../utils/projectColors';
+import StatCard from '../components/StatCard';
+import NewTaskModal from '../components/NewTaskModal';
 import './Inbox.css';
 
-const Inbox = () => {
-  const [tasks, setTasks] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
-  const { isAdmin } = useOrg();
+const PAGE_SIZE = 8;
 
-  const cargarTareas = useCallback(async () => {
+const ESTADO_LABEL = { pending: 'Pendiente', review: 'En revisión', completed: 'Completada' };
+const PRIORIDAD_LABEL = { high: 'ALTA', medium: 'MEDIA', low: 'BAJA' };
+
+const formatFecha = (dueDate) => {
+  if (!dueDate) return 'Sin fecha';
+  return new Date(dueDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+};
+
+// "Tareas del equipo" — vista de tabla compartida por ambas cuentas. Las acciones
+// de cada fila (check/borrar) respetan las mismas reglas que TaskCard (ver utils/taskAccess).
+const Inbox = () => {
+  const { user } = useAuth();
+  const esEmpresa = user?.accountType === 'empresa';
+
+  const [tasks, setTasks] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [busqueda, setBusqueda] = useState('');
+  const [filtro, setFiltro] = useState('todas');
+  const [pagina, setPagina] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const cargarDatos = useCallback(async () => {
     try {
-      const data = await getTasks();
-      setTasks(data);
+      const [tareas, estadisticas] = await Promise.all([getTasks(), getTaskStats()]);
+      setTasks(tareas);
+      setStats(estadisticas);
     } catch (error) {
       console.error('Error al cargar la bandeja:', error);
     } finally {
@@ -25,25 +46,47 @@ const Inbox = () => {
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    cargarTareas();
-  }, [cargarTareas]);
+    cargarDatos();
+  }, [cargarDatos]);
 
-  const pendientes = tasks.filter((t) => !t.completed);
+  const pendientes = useMemo(() => tasks.filter((t) => !t.completed), [tasks]);
+
+  const filtradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase();
+    return pendientes
+      .filter((t) => !texto || t.title.toLowerCase().includes(texto))
+      .filter((t) => {
+        if (filtro === 'mias') return String(t.assignedTo?._id || t.assignedTo) === String(user?._id);
+        if (filtro === 'alta') return t.priority === 'high';
+        return true;
+      });
+  }, [pendientes, busqueda, filtro, user]);
+
+  const totalPaginas = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
+  const paginaActual = Math.min(pagina, totalPaginas);
+  const visibles = filtradas.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
+
+  const cambiarBusqueda = (valor) => { setBusqueda(valor); setPagina(1); };
+  const cambiarFiltro = (valor) => { setFiltro(valor); setPagina(1); };
 
   const handleToggle = async (task) => {
+    const { esEmpresa: puedeConfirmar } = getTaskAccess(task, user);
     try {
-      await updateTask(task._id, { ...task, completed: !task.completed });
-      await cargarTareas();
+      const payload = puedeConfirmar
+        ? { ...task, completed: !task.completed }
+        : { ...task, pendingReview: !task.pendingReview };
+      await updateTask(task._id, payload);
+      await cargarDatos();
     } catch (error) {
       console.error(error);
-      alert('Hubo un error al actualizar la tarea');
+      alert(error.response?.data?.mensaje || 'Hubo un error al actualizar la tarea');
     }
   };
 
   const handleDelete = async (id) => {
     try {
       await deleteTask(id);
-      await cargarTareas();
+      await cargarDatos();
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.mensaje || 'Hubo un error al eliminar la tarea');
@@ -52,25 +95,127 @@ const Inbox = () => {
 
   return (
     <div className="inbox-page">
-      <h1>Bandeja</h1>
-      <p className="page-subtitle">Todas las tareas pendientes del equipo, sin importar la fecha.</p>
+      <div className="inbox-header">
+        <div>
+          <h1>Tareas del equipo</h1>
+          <p className="page-subtitle">Todas las tareas pendientes del equipo, sin importar la fecha.</p>
+        </div>
+        <div className="inbox-header-actions">
+          <button className="btn-ghost" onClick={() => alert('Próximamente: exportar reporte')}>
+            <FileDown size={16} /> Exportar reporte
+          </button>
+          {esEmpresa && (
+            <button className="btn-primary inbox-assign-btn" onClick={() => setIsModalOpen(true)}>
+              <Plus size={16} /> Asignar Nueva Tarea
+            </button>
+          )}
+        </div>
+      </div>
+
+      {stats && (
+        <div className="inbox-stats">
+          <StatCard label="TASA DE FINALIZACIÓN" value={`${stats.completionRate}%`} hint="Tareas completadas vs. perdidas." tone="success" />
+          <StatCard label="TAREAS VENCIDAS" value={stats.missedCount} hint="Sin completar y fuera de fecha." tone="danger" />
+          <StatCard label="TAREAS ACTIVAS" value={pendientes.length} hint="Pendientes o en revisión ahora mismo." tone="neutral" />
+        </div>
+      )}
+
+      <div className="inbox-toolbar">
+        <div className="inbox-search">
+          <Search size={16} />
+          <input
+            type="text"
+            placeholder="Filtrar tareas…"
+            value={busqueda}
+            onChange={(e) => cambiarBusqueda(e.target.value)}
+          />
+        </div>
+        <div className="inbox-filter-chips">
+          <button className={`inbox-filter-chip ${filtro === 'todas' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('todas')}>Todas</button>
+          <button className={`inbox-filter-chip ${filtro === 'mias' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('mias')}>Mis tareas</button>
+          <button className={`inbox-filter-chip ${filtro === 'alta' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('alta')}>Alta prioridad</button>
+        </div>
+      </div>
 
       {isLoading ? (
         <p className="empty-state">Cargando tareas…</p>
-      ) : pendientes.length === 0 ? (
-        <p className="empty-state">No hay tareas pendientes. ¡Al día! 🎉</p>
+      ) : filtradas.length === 0 ? (
+        <p className="empty-state">No hay tareas que coincidan con el filtro.</p>
       ) : (
-        <div className="inbox-grid">
-          {pendientes.map((task) => (
-            <TaskCard
-              key={task._id}
-              task={task}
-              onDelete={handleDelete}
-              onToggleComplete={handleToggle}
-              canDelete={canDeleteTask(task, user?._id, isAdmin)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="inbox-table-wrap card-panel">
+            <table className="inbox-table">
+              <thead>
+                <tr>
+                  <th>Tarea</th>
+                  <th>Asignado a</th>
+                  <th>Prioridad</th>
+                  <th>Estado</th>
+                  <th>Fecha límite</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {visibles.map((task) => {
+                  const { estado, puedeTocarCheck, puedeBorrar, tituloBoton } = getTaskAccess(task, user);
+                  const color = getProjectColor(task.project?.color);
+                  return (
+                    <tr key={task._id}>
+                      <td>
+                        <p className="inbox-table-title">{task.title}</p>
+                        {task.project?.name && (
+                          <span className="pill" style={{ background: color.bg, color: color.text }}>{task.project.name.toUpperCase()}</span>
+                        )}
+                      </td>
+                      <td>{task.assignedTo?.name ? `${task.assignedTo.name} ${task.assignedTo.lastname || ''}` : 'Sin asignar'}</td>
+                      <td>
+                        <span className={`pill ${task.priority === 'high' ? 'pill-rose' : task.priority === 'low' ? 'pill-neutral' : 'pill-sky'}`}>
+                          {PRIORIDAD_LABEL[task.priority] || 'MEDIA'}
+                        </span>
+                      </td>
+                      <td>
+                        <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : 'pill-neutral'}`}>
+                          {ESTADO_LABEL[estado]}
+                        </span>
+                      </td>
+                      <td>{formatFecha(task.dueDate)}</td>
+                      <td>
+                        <div className="inbox-table-actions">
+                          {puedeBorrar && (
+                            <button className="icon-btn icon-btn-danger" title="Eliminar tarea" onClick={() => handleDelete(task._id)}>
+                              <X size={15} />
+                            </button>
+                          )}
+                          {puedeTocarCheck && (
+                            <button className="icon-btn icon-btn-success" title={tituloBoton} onClick={() => handleToggle(task)}>
+                              <Check size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="inbox-pagination">
+            <span>Mostrando {(paginaActual - 1) * PAGE_SIZE + 1}–{Math.min(paginaActual * PAGE_SIZE, filtradas.length)} de {filtradas.length}</span>
+            <div className="inbox-pagination-actions">
+              <button className="icon-btn" disabled={paginaActual === 1} onClick={() => setPagina((p) => p - 1)}>
+                <ChevronLeft size={15} />
+              </button>
+              <button className="icon-btn" disabled={paginaActual === totalPaginas} onClick={() => setPagina((p) => p + 1)}>
+                <ChevronRight size={15} />
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {esEmpresa && (
+        <NewTaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreated={cargarDatos} />
       )}
     </div>
   );
