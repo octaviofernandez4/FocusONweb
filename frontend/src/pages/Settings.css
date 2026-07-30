@@ -287,6 +287,12 @@
   gap: 1.3rem;
 }
 
+.settings-company-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+  width: fit-content;
+}
+
 .settings-company-avatar {
   flex-shrink: 0;
   width: 64px;
