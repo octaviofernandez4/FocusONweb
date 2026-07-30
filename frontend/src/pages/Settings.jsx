@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Pencil, Link2, Copy, Check, Loader2 } from 'lucide-react';
+import { Pencil, Link2, Copy, Check, Loader2, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { updateProfile } from '../services/profileService';
@@ -117,6 +117,8 @@ const Settings = () => {
           projects={projects}
           members={members}
           user={user}
+          org={org}
+          refreshOrg={refreshOrg}
           orgForm={orgForm}
           onSubmitOrg={onSubmitOrg}
           inviteUrl={inviteUrl}
@@ -287,16 +289,52 @@ const EmployeeSettings = ({ user, isAdmin, org, profileForm, onSubmitProfile, re
 };
 
 // --- Ajustes de cuenta empresa ---
-const CompanySettings = ({ isAdmin, projects, members, user, orgForm, onSubmitOrg, inviteUrl, copied, onGenerateInvite, onCopy }) => (
+const CompanySettings = ({ isAdmin, projects, members, user, org, refreshOrg, orgForm, onSubmitOrg, inviteUrl, copied, onGenerateInvite, onCopy }) => {
+  const logoInputRef = useRef(null);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
+  const handleLogoChange = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    setIsUploadingLogo(true);
+    try {
+      const subido = await uploadFile(file);
+      await updateOrg({ name: org?.name, logoUrl: subido.url });
+      await refreshOrg();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al subir el logo');
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  return (
   <div className="settings-company-grid">
     <section className="card-panel settings-section settings-span-2">
       <h3>Perfil de la empresa</h3>
       <form onSubmit={orgForm.handleSubmit(onSubmitOrg)} className="settings-company-form">
-        {user?.avatarUrl ? (
-          <img src={user.avatarUrl} alt="Tu foto de perfil" className="settings-avatar settings-company-avatar settings-avatar-img" />
-        ) : (
-          <div className="settings-avatar settings-company-avatar">{getInitials(user?.name, user?.lastname)}</div>
-        )}
+        <div className="settings-company-avatar-wrap">
+          {org?.logoUrl ? (
+            <img src={org.logoUrl} alt="Logo de la empresa" className="settings-avatar settings-company-avatar settings-avatar-img" />
+          ) : (
+            <div className="settings-avatar settings-company-avatar"><Building2 size={26} /></div>
+          )}
+          {isAdmin && (
+            <button
+              type="button"
+              className="settings-avatar-edit"
+              title="Cambiar logo"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={isUploadingLogo}
+            >
+              {isUploadingLogo ? <Loader2 size={12} className="settings-avatar-spinner" /> : <Pencil size={12} />}
+            </button>
+          )}
+          <input ref={logoInputRef} type="file" accept=".png,.jpg,.jpeg" hidden onChange={handleLogoChange} />
+        </div>
         <div className="settings-company-fields">
           <div className="settings-form-row">
             <div className="form-group">
@@ -392,6 +430,7 @@ const CompanySettings = ({ isAdmin, projects, members, user, orgForm, onSubmitOr
       )}
     </section>
   </div>
-);
+  );
+};
 
 export default Settings;
