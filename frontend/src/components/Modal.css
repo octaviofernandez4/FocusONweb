@@ -17,9 +17,14 @@
   animation: fadeIn 0.25s ease-out;
 }
 
-.modal-card-lg {
-  max-width: 640px;
-  padding: 2.8rem;
+/* Selector combinado (en vez de solo .modal-card-lg) a propósito: .glass-card
+   en index.css también define max-width con la misma especificidad, y según
+   el orden final del bundle podía ganarle a esta regla y dejar el modal
+   "grande" atascado en 400px. Con el selector combinado, esta gana siempre. */
+.modal-card.modal-card-lg {
+  max-width: 920px;
+  width: 92vw;
+  padding: 3.2rem;
 }
 
 .modal-header {
@@ -31,4 +36,8 @@
 
 .modal-header h3 {
   font-size: 1.2rem;
+}
+
+.modal-card-lg .modal-header h3 {
+  font-size: 1.6rem;
 }

@@ -48,9 +48,20 @@ const taskSchema = new mongoose.Schema({
         required: true
     },
     project: {
+        // Opcional — una tarea puede no pertenecer a ningún proyecto en particular
+        // (ya no existe un proyecto "General" automático; para eso está el filtro "Todas").
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Project',
-        required: true
+        default: null
+    },
+    attachments: {
+        type: [{
+            name: String,
+            url: String,
+            size: Number,
+            type: String
+        }],
+        default: []
     }
 }, { timestamps: true });
 

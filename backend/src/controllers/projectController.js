@@ -4,7 +4,7 @@ const Task = require('../models/Task');
 // 1. Obtener los proyectos de la organización activa
 const obtenerProyectos = async (req, res) => {
     try {
-        const proyectos = await Project.find({ org: req.orgId }).sort({ isDefault: -1, createdAt: 1 });
+        const proyectos = await Project.find({ org: req.orgId }).sort({ createdAt: 1 });
         res.status(200).json(proyectos);
     } catch (error) {
         console.error(error);
@@ -55,7 +55,7 @@ const actualizarProyecto = async (req, res) => {
     }
 };
 
-// 4. Borrar un proyecto (no permitido si es el proyecto default o si tiene tareas)
+// 4. Borrar un proyecto (no permitido si todavía tiene tareas)
 const borrarProyecto = async (req, res) => {
     try {
         const { id } = req.params;
@@ -63,10 +63,6 @@ const borrarProyecto = async (req, res) => {
         const proyecto = await Project.findOne({ _id: id, org: req.orgId });
         if (!proyecto) {
             return res.status(404).json({ mensaje: 'El proyecto no existe en esta organización' });
-        }
-
-        if (proyecto.isDefault) {
-            return res.status(409).json({ mensaje: 'No se puede borrar el proyecto General' });
         }
 
         const tareasAsociadas = await Task.countDocuments({ project: id });

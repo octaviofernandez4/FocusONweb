@@ -3,7 +3,6 @@ const Organization = require('../models/Organization');
 const Membership = require('../models/Membership');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const ensureDefaultProject = require('../utils/ensureDefaultProject');
 
 // 1. Registrar un nuevo usuario (ahora con contraseña encriptada)
 const crearUsuario = async (req, res) => {
@@ -44,7 +43,6 @@ const crearUsuario = async (req, res) => {
                 createdBy: nuevoUsuario._id
             });
             await Membership.create({ org: organizacion._id, user: nuevoUsuario._id, role: 'admin' });
-            await ensureDefaultProject(organizacion._id, nuevoUsuario._id);
         }
 
         // El tipo de cuenta (qué panel ve, si puede invitar) es independiente del
@@ -105,7 +103,7 @@ const loginUsuario = async (req, res) => {
 // 3. Obtener el perfil del usuario autenticado
 const obtenerPerfil = async (req, res) => {
     try {
-        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType');
+        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType avatarUrl');
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
@@ -121,17 +119,18 @@ const obtenerPerfil = async (req, res) => {
 // 4. Actualizar el perfil del usuario autenticado (whitelist de campos)
 const actualizarPerfil = async (req, res) => {
     try {
-        const { name, lastname, statusText } = req.body;
+        const { name, lastname, statusText, avatarUrl } = req.body;
         const datosAActualizar = {};
         if (name !== undefined) datosAActualizar.name = name;
         if (lastname !== undefined) datosAActualizar.lastname = lastname;
         if (statusText !== undefined) datosAActualizar.statusText = statusText;
+        if (avatarUrl !== undefined) datosAActualizar.avatarUrl = avatarUrl;
 
         const usuarioActualizado = await User.findByIdAndUpdate(
             req.user.id,
             datosAActualizar,
             { new: true }
-        ).select('name lastname email statusText currentOrg');
+        ).select('name lastname email statusText currentOrg avatarUrl');
 
         res.status(200).json({ mensaje: '✏️ Perfil actualizado', usuario: usuarioActualizado });
     } catch (error) {

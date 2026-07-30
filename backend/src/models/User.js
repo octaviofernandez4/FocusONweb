@@ -32,6 +32,10 @@ const userSchema = new mongoose.Schema({
         default: 'Enfocado',
         trim: true
     },
+    avatarUrl: {
+        type: String,
+        default: null
+    },
     // Qué tipo de cuenta eligió al registrarse: 'empresa' funda/administra su
     // organización, 'empleado' pertenece a la de alguien más. Es independiente
     // del rol en Membership porque un empleado sin invitación todavía necesita

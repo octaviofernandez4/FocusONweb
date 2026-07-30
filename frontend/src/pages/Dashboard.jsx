@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
 import { CalendarDays, FileBarChart, ArrowRight, Check, X, Plus } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { listMembers } from '../services/orgService';
@@ -9,7 +8,7 @@ import { useOrg } from '../hooks/useOrg';
 import { isTodayRelevant } from '../utils/dateHelpers';
 import { getProjectColor } from '../utils/projectColors';
 import StatCard from '../components/StatCard';
-import TaskCard from '../components/TaskCard';
+import TaskTable from '../components/TaskTable';
 import NewTaskModal from '../components/NewTaskModal';
 import './Dashboard.css';
 
@@ -165,22 +164,7 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
         {tareasActivas.length === 0 ? (
           <p className="empty-state">No hay tareas activas. ¡Asigná la primera arriba!</p>
         ) : (
-          <div className="dashboard-tasks-grid">
-            {tareasActivas.map((task, i) => (
-              <motion.div
-                key={task._id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25, delay: Math.min(i * 0.03, 0.3) }}
-              >
-                <TaskCard
-                  task={task}
-                  onDelete={handleDelete}
-                  onToggleComplete={handleToggle}
-                />
-              </motion.div>
-            ))}
-          </div>
+          <TaskTable tasks={tareasActivas} onToggle={handleToggle} onDelete={handleDelete} />
         )}
       </div>
 
@@ -214,8 +198,8 @@ const EmployeeView = ({ user, tasks, stats, projects, members, navigate }) => {
           <p className="page-subtitle">Esto es lo que necesita tu atención hoy, {formatFechaHoy()}.</p>
         </div>
         <div className="dashboard-header-actions">
-          <button className="btn-ghost" onClick={() => navigate('/app/today')}>
-            <CalendarDays size={16} /> Ver calendario
+          <button className="btn-ghost" onClick={() => navigate('/app/projects')}>
+            <CalendarDays size={16} /> Ver proyectos
           </button>
         </div>
       </div>

@@ -1,23 +1,33 @@
 .new-task-modal-subtitle {
   color: var(--text-muted);
-  font-size: 0.9rem;
-  margin: -0.8rem 0 1.6rem;
+  font-size: 0.98rem;
+  margin: -0.8rem 0 1.8rem;
 }
 
 .new-task-modal-form .form-group {
-  margin-bottom: 1.2rem;
+  margin-bottom: 1.5rem;
+}
+
+.new-task-modal-form .form-group label {
+  font-size: 0.9rem;
+}
+
+.new-task-modal-form .form-group > input,
+.new-task-modal-form .input-with-icon {
+  font-size: 1rem;
+  padding: 1rem 1.15rem;
 }
 
 .new-task-modal-textarea,
 .new-task-modal-select {
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 0.85rem 1.1rem;
+  padding: 1rem 1.15rem;
   border-radius: 10px;
   color: white;
   outline: none;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 1rem;
   resize: vertical;
   transition: all 0.3s ease;
 }
@@ -31,11 +41,18 @@
 .new-task-modal-dropzone {
   border: 1px dashed var(--border-subtle);
   border-radius: var(--radius-md);
-  padding: 1.6rem 1rem;
+  padding: 2.6rem 1rem;
   text-align: center;
   color: var(--text-muted);
   background: rgba(15, 23, 42, 0.4);
-  cursor: not-allowed;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.new-task-modal-dropzone:hover,
+.new-task-modal-dropzone.is-dragging {
+  border-color: var(--color-electric-light);
+  background: rgba(10, 108, 255, 0.06);
 }
 
 .new-task-modal-dropzone svg {
@@ -44,14 +61,60 @@
   opacity: 0.7;
 }
 
+.new-task-modal-spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .new-task-modal-dropzone p {
-  font-size: 0.85rem;
+  font-size: 0.95rem;
   color: var(--text-secondary);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.3rem;
 }
 
 .new-task-modal-dropzone span {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+}
+
+.new-task-modal-attachments {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+}
+
+.new-task-modal-attachment {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-electric-light);
+}
+
+.new-task-modal-attachment-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.new-task-modal-attachment-info p {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.new-task-modal-attachment-info span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 .new-task-modal-actions {

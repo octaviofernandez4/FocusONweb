@@ -1,3 +1,6 @@
+export const ESTADO_LABEL = { pending: 'Pendiente', review: 'En revisión', completed: 'Completada' };
+export const PRIORIDAD_LABEL = { high: 'ALTA', medium: 'MEDIA', low: 'BAJA' };
+
 // Estado de una tarea: 'completed' (confirmada por la empresa), 'review' (el empleado la
 // marcó como lista, esperando confirmación) o 'pending' (todavía sin marcar).
 export const getEstado = (task) => {

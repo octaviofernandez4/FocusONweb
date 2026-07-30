@@ -28,10 +28,8 @@
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  width: 360px;
-  max-width: min(360px, 90vw);
-  max-height: 80vh;
-  overflow-y: auto;
+  width: 460px;
+  max-width: min(460px, 92vw);
   padding: 1.2rem;
   z-index: 50;
   animation: fadeIn 0.15s ease-out;

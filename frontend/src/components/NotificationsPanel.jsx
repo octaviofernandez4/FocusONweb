@@ -6,6 +6,11 @@ import { useAuth } from '../hooks/useAuth';
 import { construirNotificaciones, formatRelativo } from '../utils/notifications';
 import './NotificationsPanel.css';
 
+// El dropdown solo muestra un adelanto (sin scroll interno); el resto se ve
+// en /app/notifications vía "Ver todas las notificaciones".
+const NUEVAS_LIMITE = 3;
+const ANTERIORES_LIMITE = 2;
+
 // Bandeja de notificaciones, compartida por ambos paneles (empresa/empleado).
 // No hay backend de notificaciones — se derivan en el momento a partir de las
 // tareas reales (asignaciones, listas para revisión, confirmadas).
@@ -49,9 +54,12 @@ const NotificationsPanel = () => {
     return () => document.removeEventListener('mousedown', cerrarSiEsAfuera);
   }, []);
 
-  const { nuevas: todasNuevas, anteriores } = construirNotificaciones(tasks, user, esEmpresa);
+  const { nuevas: todasNuevas, anteriores: todasAnteriores } = construirNotificaciones(tasks, user, esEmpresa);
   const nuevas = todasNuevas.filter((n) => !ignoradas.includes(n.id));
   const badgeCount = leidas ? 0 : nuevas.length;
+
+  const nuevasVisibles = nuevas.slice(0, NUEVAS_LIMITE);
+  const anterioresVisibles = todasAnteriores.slice(0, ANTERIORES_LIMITE);
 
   const irATarea = () => {
     navigate('/app/inbox');
@@ -82,14 +90,14 @@ const NotificationsPanel = () => {
           </div>
 
           <div className="notif-panel-body">
-            {nuevas.length === 0 && anteriores.length === 0 && (
+            {nuevas.length === 0 && todasAnteriores.length === 0 && (
               <p className="empty-state notif-empty">No tenés notificaciones todavía.</p>
             )}
 
-            {nuevas.length > 0 && (
+            {nuevasVisibles.length > 0 && (
               <div className="notif-section">
                 <span className="notif-section-label">NUEVAS</span>
-                {nuevas.map((n) => (
+                {nuevasVisibles.map((n) => (
                   <div key={n.id} className="notif-item is-new">
                     <div className="notif-item-icon"><UserRoundPlus size={16} /></div>
                     <div className="notif-item-body">
@@ -108,10 +116,10 @@ const NotificationsPanel = () => {
               </div>
             )}
 
-            {anteriores.length > 0 && (
+            {anterioresVisibles.length > 0 && (
               <div className="notif-section">
                 <span className="notif-section-label">ANTERIORES</span>
-                {anteriores.map((n) => (
+                {anterioresVisibles.map((n) => (
                   <div key={n.id} className="notif-item">
                     <div className="notif-item-icon is-muted"><CheckCircle2 size={16} /></div>
                     <div className="notif-item-body">

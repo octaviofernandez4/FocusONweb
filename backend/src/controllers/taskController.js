@@ -1,16 +1,15 @@
 const Task = require('../models/Task');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
-const ensureDefaultProject = require('../utils/ensureDefaultProject');
 
 // 1. Crear tarea (solo cuenta empresa, ver requireCompanyAccount en la ruta)
 const crearTarea = async (req, res) => {
     try {
-        const { title, description, dueDate, priority, project, assignedToEmail } = req.body;
+        const { title, description, dueDate, priority, project, assignedToEmail, attachments } = req.body;
 
-        // "project" puede venir como ID crudo o como objeto populado ({_id, name, color})
-        const projectId = project && typeof project === 'object' ? project._id : project;
-        const proyecto = projectId || (await ensureDefaultProject(req.orgId, req.user.id))._id;
+        // "project" puede venir como ID crudo o como objeto populado ({_id, name, color});
+        // es opcional — una tarea sin proyecto asignado es válida (aparece solo en "Todas").
+        const proyecto = project && typeof project === 'object' ? project._id : (project || null);
 
         let assignedTo = null;
         if (assignedToEmail) {
@@ -32,6 +31,7 @@ const crearTarea = async (req, res) => {
             priority,
             project: proyecto,
             assignedTo,
+            attachments: attachments || [],
             user: req.user.id,
             org: req.orgId
         });
@@ -133,7 +133,7 @@ const limpiarTareasCompletadas = async (req, res) => {
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, completed, pendingReview, project, priority, assignedToEmail } = req.body;
+        const { title, description, dueDate, completed, pendingReview, project, priority, assignedToEmail, attachments } = req.body;
 
         const tarea = await Task.findOne({ _id: id, org: req.orgId });
         if (!tarea) {
@@ -144,8 +144,9 @@ const actualizarTarea = async (req, res) => {
         if (title !== undefined) tarea.title = title;
         if (description !== undefined) tarea.description = description;
         if (dueDate !== undefined) tarea.dueDate = dueDate;
-        if (project !== undefined) tarea.project = project && typeof project === 'object' ? project._id : project;
+        if (project !== undefined) tarea.project = project && typeof project === 'object' ? project._id : (project || null);
         if (priority !== undefined) tarea.priority = priority;
+        if (attachments !== undefined) tarea.attachments = attachments;
 
         if (assignedToEmail !== undefined) {
             if (!assignedToEmail) {

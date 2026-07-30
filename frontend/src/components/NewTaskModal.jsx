@@ -1,17 +1,28 @@
-import { useEffect } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, UploadCloud } from 'lucide-react';
+import { Mail, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
 import { createTask } from '../services/taskService';
+import { uploadFile } from '../services/uploadService';
 import { taskAssignSchema } from '../schemas/taskAssignSchema';
 import { useOrg } from '../hooks/useOrg';
+import { formatTamanio } from '../utils/fileSize';
 import Modal from './Modal';
 import './NewTaskModal.css';
+
+const TIPOS_PERMITIDOS = ['image/png', 'image/jpeg', 'application/pdf'];
+const TAMANIO_MAXIMO = 10 * 1024 * 1024; // 10MB
 
 // Modal de "Asignar Nueva Tarea" — reemplaza el input inline de creación rápida.
 // Solo lo usan cuentas empresa (la ruta del backend también lo exige).
 const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
   const { projects } = useOrg();
+  const fileInputRef = useRef(null);
+
+  const [attachments, setAttachments] = useState([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadError, setUploadError] = useState('');
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(taskAssignSchema)
@@ -19,18 +30,62 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
 
   useEffect(() => {
     if (isOpen) {
-      reset({ assignedToEmail: '', title: '', description: '', dueDate: '', project: defaultProjectId || '' });
+      reset({ assignedToEmail: '', title: '', description: '', priority: 'medium', dueDate: '', project: defaultProjectId || '' });
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAttachments([]);
+      setUploadError('');
     }
   }, [isOpen, defaultProjectId, reset]);
+
+  const subirArchivos = async (files) => {
+    setUploadError('');
+    for (const file of files) {
+      if (!TIPOS_PERMITIDOS.includes(file.type)) {
+        setUploadError('Solo se permiten archivos PNG, JPG o PDF');
+        continue;
+      }
+      if (file.size > TAMANIO_MAXIMO) {
+        setUploadError('Cada archivo puede pesar hasta 10MB');
+        continue;
+      }
+      setIsUploading(true);
+      try {
+        const subido = await uploadFile(file);
+        setAttachments((prev) => [...prev, subido]);
+      } catch (error) {
+        console.error(error);
+        setUploadError(error.response?.data?.mensaje || 'Hubo un error al subir el archivo');
+      } finally {
+        setIsUploading(false);
+      }
+    }
+  };
+
+  const handleFileInputChange = (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length) subirArchivos(files);
+    e.target.value = '';
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(e.dataTransfer.files || []);
+    if (files.length) subirArchivos(files);
+  };
+
+  const quitarAdjunto = (url) => setAttachments((prev) => prev.filter((a) => a.url !== url));
 
   const onSubmit = async (data) => {
     try {
       await createTask({
         title: data.title,
         description: data.description || undefined,
+        priority: data.priority || undefined,
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
         assignedToEmail: data.assignedToEmail,
-        project: data.project || undefined
+        project: data.project || undefined,
+        attachments
       });
       await onCreated();
       onClose();
@@ -61,6 +116,15 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
         </div>
 
         <div className="form-group">
+          <label>Prioridad</label>
+          <select {...register('priority')} className="new-task-modal-select">
+            <option value="low">Baja</option>
+            <option value="medium">Media</option>
+            <option value="high">Alta</option>
+          </select>
+        </div>
+
+        <div className="form-group">
           <label>Descripción</label>
           <textarea rows={3} placeholder="Detalles de la tarea…" {...register('description')} className="new-task-modal-textarea" />
         </div>
@@ -83,16 +147,48 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
 
         <div className="form-group">
           <label>Adjuntar archivos o fotos</label>
-          <div className="new-task-modal-dropzone" title="Todavía no disponible">
-            <UploadCloud size={28} />
-            <p><strong>Subir un archivo</strong> — función en desarrollo</p>
-            <span>PNG, JPG, PDF hasta 10MB (próximamente)</span>
+          <div
+            className={`new-task-modal-dropzone ${isDragging ? 'is-dragging' : ''}`}
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".png,.jpg,.jpeg,.pdf"
+              multiple
+              hidden
+              onChange={handleFileInputChange}
+            />
+            {isUploading ? <Loader2 size={28} className="new-task-modal-spinner" /> : <UploadCloud size={28} />}
+            <p><strong>{isUploading ? 'Subiendo…' : 'Subí un archivo'}</strong> o arrastrá y soltá</p>
+            <span>PNG, JPG, PDF hasta 10MB</span>
           </div>
+          {uploadError && <span className="error-text">{uploadError}</span>}
+
+          {attachments.length > 0 && (
+            <div className="new-task-modal-attachments">
+              {attachments.map((a) => (
+                <div key={a.url} className="new-task-modal-attachment">
+                  <FileText size={16} />
+                  <div className="new-task-modal-attachment-info">
+                    <p>{a.name}</p>
+                    <span>{formatTamanio(a.size)}</span>
+                  </div>
+                  <button type="button" className="icon-btn icon-btn-danger" onClick={() => quitarAdjunto(a.url)} title="Quitar">
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         <div className="new-task-modal-actions">
           <button type="button" className="btn-ghost" onClick={onClose}>Cancelar</button>
-          <button type="submit" className="btn-primary new-task-modal-submit" disabled={isSubmitting}>
+          <button type="submit" className="btn-primary new-task-modal-submit" disabled={isSubmitting || isUploading}>
             {isSubmitting ? 'Asignando…' : 'Asignar Tarea'}
           </button>
         </div>

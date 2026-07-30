@@ -25,14 +25,19 @@ const obtenerOrganizacionActual = async (req, res) => {
     }
 };
 
-// 2. Renombrar la organización (solo admin)
+// 2. Renombrar la organización y/o cambiar su logo/rubro/dirección (solo admin)
 const actualizarOrganizacion = async (req, res) => {
     try {
-        const { name } = req.body;
+        const { name, logoUrl, industry, address } = req.body;
+
+        const datosAActualizar = { name };
+        if (logoUrl !== undefined) datosAActualizar.logoUrl = logoUrl;
+        if (industry !== undefined) datosAActualizar.industry = industry;
+        if (address !== undefined) datosAActualizar.address = address;
 
         const organizacion = await Organization.findByIdAndUpdate(
             req.orgId,
-            { name },
+            datosAActualizar,
             { new: true }
         );
 
@@ -46,7 +51,7 @@ const actualizarOrganizacion = async (req, res) => {
 // 3. Listar miembros de la organización
 const listarMiembros = async (req, res) => {
     try {
-        const membresias = await Membership.find({ org: req.orgId }).populate('user', 'name lastname email statusText');
+        const membresias = await Membership.find({ org: req.orgId }).populate('user', 'name lastname email statusText avatarUrl');
 
         res.status(200).json(membresias.map((m) => ({
             id: m.user._id,
@@ -54,6 +59,7 @@ const listarMiembros = async (req, res) => {
             lastname: m.user.lastname,
             email: m.user.email,
             statusText: m.user.statusText,
+            avatarUrl: m.user.avatarUrl,
             role: m.role
         })));
     } catch (error) {

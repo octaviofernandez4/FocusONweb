@@ -1,22 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Search, Plus, FileDown, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess } from '../utils/taskAccess';
-import { getProjectColor } from '../utils/projectColors';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
+import TaskTable from '../components/TaskTable';
 import './Inbox.css';
 
 const PAGE_SIZE = 8;
-
-const ESTADO_LABEL = { pending: 'Pendiente', review: 'En revisión', completed: 'Completada' };
-const PRIORIDAD_LABEL = { high: 'ALTA', medium: 'MEDIA', low: 'BAJA' };
-
-const formatFecha = (dueDate) => {
-  if (!dueDate) return 'Sin fecha';
-  return new Date(dueDate).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
-};
 
 // "Tareas del equipo" — vista de tabla compartida por ambas cuentas. Las acciones
 // de cada fila (check/borrar) respetan las mismas reglas que TaskCard (ver utils/taskAccess).
@@ -143,62 +135,7 @@ const Inbox = () => {
         <p className="empty-state">No hay tareas que coincidan con el filtro.</p>
       ) : (
         <>
-          <div className="inbox-table-wrap card-panel">
-            <table className="inbox-table">
-              <thead>
-                <tr>
-                  <th>Tarea</th>
-                  <th>Asignado a</th>
-                  <th>Prioridad</th>
-                  <th>Estado</th>
-                  <th>Fecha límite</th>
-                  <th>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visibles.map((task) => {
-                  const { estado, puedeTocarCheck, puedeBorrar, tituloBoton } = getTaskAccess(task, user);
-                  const color = getProjectColor(task.project?.color);
-                  return (
-                    <tr key={task._id}>
-                      <td>
-                        <p className="inbox-table-title">{task.title}</p>
-                        {task.project?.name && (
-                          <span className="pill" style={{ background: color.bg, color: color.text }}>{task.project.name.toUpperCase()}</span>
-                        )}
-                      </td>
-                      <td>{task.assignedTo?.name ? `${task.assignedTo.name} ${task.assignedTo.lastname || ''}` : 'Sin asignar'}</td>
-                      <td>
-                        <span className={`pill ${task.priority === 'high' ? 'pill-rose' : task.priority === 'low' ? 'pill-neutral' : 'pill-sky'}`}>
-                          {PRIORIDAD_LABEL[task.priority] || 'MEDIA'}
-                        </span>
-                      </td>
-                      <td>
-                        <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : 'pill-neutral'}`}>
-                          {ESTADO_LABEL[estado]}
-                        </span>
-                      </td>
-                      <td>{formatFecha(task.dueDate)}</td>
-                      <td>
-                        <div className="inbox-table-actions">
-                          {puedeBorrar && (
-                            <button className="icon-btn icon-btn-danger" title="Eliminar tarea" onClick={() => handleDelete(task._id)}>
-                              <X size={15} />
-                            </button>
-                          )}
-                          {puedeTocarCheck && (
-                            <button className="icon-btn icon-btn-success" title={tituloBoton} onClick={() => handleToggle(task)}>
-                              <Check size={15} />
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <TaskTable tasks={visibles} onToggle={handleToggle} onDelete={handleDelete} />
 
           <div className="inbox-pagination">
             <span>Mostrando {(paginaActual - 1) * PAGE_SIZE + 1}–{Math.min(paginaActual * PAGE_SIZE, filtradas.length)} de {filtradas.length}</span>
