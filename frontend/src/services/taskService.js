@@ -1,12 +1,15 @@
 import api from './api';
 
-export const getTasks = async (projectId) => {
-  const response = await api.get('/tasks', { params: projectId ? { project: projectId } : undefined });
+export const getTasks = async ({ project, mine } = {}) => {
+  const params = {};
+  if (project) params.project = project;
+  if (mine) params.mine = 'true';
+  const response = await api.get('/tasks', { params: Object.keys(params).length ? params : undefined });
   return response.data;
 };
 
-export const getTaskStats = async () => {
-  const response = await api.get('/tasks/stats');
+export const getTaskStats = async ({ mine } = {}) => {
+  const response = await api.get('/tasks/stats', { params: mine ? { mine: 'true' } : undefined });
   return response.data;
 };
 

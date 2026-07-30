@@ -44,12 +44,15 @@ const crearTarea = async (req, res) => {
     }
 };
 
-// 2. Obtener tareas de la organización (con filtro opcional por proyecto)
+// 2. Obtener tareas de la organización (con filtro opcional por proyecto, o solo las propias)
 const obtenerTareas = async (req, res) => {
     try {
         const filtro = { org: req.orgId };
         if (req.query.project) {
             filtro.project = req.query.project;
+        }
+        if (req.query.mine === 'true') {
+            filtro.assignedTo = req.user.id;
         }
 
         const tareas = await Task.find(filtro)
@@ -65,16 +68,21 @@ const obtenerTareas = async (req, res) => {
     }
 };
 
-// 3. Estadísticas de tareas de la organización
+// 3. Estadísticas de tareas de la organización (o solo las propias, con ?mine=true)
 const obtenerEstadisticasTareas = async (req, res) => {
     try {
         const ahora = new Date();
         const hace7dias = new Date(ahora.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+        const base = { org: req.orgId };
+        if (req.query.mine === 'true') {
+            base.assignedTo = req.user.id;
+        }
+
         const [totalCompleted, completedThisWeek, missedCount] = await Promise.all([
-            Task.countDocuments({ org: req.orgId, completed: true }),
-            Task.countDocuments({ org: req.orgId, completed: true, completedAt: { $gte: hace7dias } }),
-            Task.countDocuments({ org: req.orgId, completed: false, dueDate: { $lt: ahora } })
+            Task.countDocuments({ ...base, completed: true }),
+            Task.countDocuments({ ...base, completed: true, completedAt: { $gte: hace7dias } }),
+            Task.countDocuments({ ...base, completed: false, dueDate: { $lt: ahora } })
         ]);
 
         const totalConsiderado = totalCompleted + missedCount;

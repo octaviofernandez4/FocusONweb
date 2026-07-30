@@ -1,14 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CalendarDays, FileBarChart, ArrowRight, Check, X, Plus } from 'lucide-react';
-import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
+import { getTasks, getTaskStats, updateTask } from '../services/taskService';
 import { listMembers } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import { isTodayRelevant } from '../utils/dateHelpers';
+import { isTodayRelevant, isSameLocalDay } from '../utils/dateHelpers';
 import { getProjectColor } from '../utils/projectColors';
 import StatCard from '../components/StatCard';
-import TaskTable from '../components/TaskTable';
 import NewTaskModal from '../components/NewTaskModal';
 import './Dashboard.css';
 
@@ -16,6 +15,8 @@ const formatFechaHoy = () => {
   const texto = new Date().toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
   return texto.charAt(0).toUpperCase() + texto.slice(1);
 };
+
+const NOMBRES_DIA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const Dashboard = () => {
   const { user } = useAuth();
@@ -52,14 +53,42 @@ const Dashboard = () => {
 
   return esEmpresa
     ? <CompanyView stats={stats} projects={projects} members={members} tasks={tasks} onRefresh={cargarDatos} />
-    : <EmployeeView user={user} tasks={tasks} stats={stats} projects={projects} members={members} navigate={navigate} />;
+    : <EmployeeView user={user} tasks={tasks} stats={stats} navigate={navigate} />;
 };
 
 // --- Vista Empresa (admin) ---
 const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const pendientesDeConfirmacion = tasks.filter((t) => t.pendingReview && !t.completed);
-  const tareasActivas = tasks.filter((t) => !t.completed);
+
+  // Actividad real de los últimos 5 días: cuántas tareas se crearon vs. se
+  // completaron cada día (no hay datos inventados, sale de createdAt/completedAt).
+  const actividadSemanal = useMemo(() => {
+    const hoy = new Date();
+    const dias = [];
+    for (let i = 4; i >= 0; i--) {
+      const fecha = new Date(hoy);
+      fecha.setDate(hoy.getDate() - i);
+      const completadas = tasks.filter((t) => t.completedAt && isSameLocalDay(t.completedAt, fecha)).length;
+      const asignadas = tasks.filter((t) => t.createdAt && isSameLocalDay(t.createdAt, fecha)).length;
+      dias.push({ label: NOMBRES_DIA[fecha.getDay()], completadas, asignadas });
+    }
+    return dias;
+  }, [tasks]);
+  const maxActividad = Math.max(1, ...actividadSemanal.flatMap((d) => [d.completadas, d.asignadas]));
+
+  // Carga de trabajo real por proyecto: tareas activas ahora mismo, normalizadas
+  // contra el proyecto más cargado. "Sobrecarga" = tiene más tareas activas que completadas.
+  const cargaPorProyecto = useMemo(() => {
+    const datos = projects.map((project) => {
+      const tareasDelProyecto = tasks.filter((t) => (t.project?._id || t.project) === project._id);
+      const activas = tareasDelProyecto.filter((t) => !t.completed).length;
+      const completadas = tareasDelProyecto.filter((t) => t.completed).length;
+      return { ...project, activas, sobrecarga: activas > 0 && activas > completadas };
+    });
+    const max = Math.max(1, ...datos.map((d) => d.activas));
+    return datos.map((d) => ({ ...d, porcentaje: Math.round((d.activas / max) * 100) }));
+  }, [projects, tasks]);
 
   const handleConfirmar = async (task) => {
     try {
@@ -81,26 +110,6 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
     }
   };
 
-  const handleToggle = async (task) => {
-    try {
-      await updateTask(task._id, { ...task, completed: !task.completed });
-      await onRefresh();
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.mensaje || 'Hubo un error al actualizar la tarea');
-    }
-  };
-
-  const handleDelete = async (id) => {
-    try {
-      await deleteTask(id);
-      await onRefresh();
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.mensaje || 'Hubo un error al eliminar la tarea');
-    }
-  };
-
   return (
     <div className="dashboard-page">
       <div className="dashboard-header">
@@ -112,7 +121,10 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
           <button className="btn-ghost" onClick={() => alert('Próximamente: filtro por período')}>
             <CalendarDays size={16} /> Este trimestre
           </button>
-          <button className="btn-primary dashboard-report-btn" onClick={() => alert('Próximamente: generación de reportes')}>
+          <button className="btn-primary dashboard-assign-btn" onClick={() => setIsModalOpen(true)}>
+            <Plus size={16} /> Asignar Nueva Tarea
+          </button>
+          <button className="btn-ghost" onClick={() => alert('Próximamente: generación de reportes')}>
             <FileBarChart size={16} /> Generar reporte
           </button>
         </div>
@@ -122,6 +134,12 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
         <StatCard label="PROYECTOS ACTIVOS" value={projects.length} hint="Proyectos en curso ahora mismo." tone="neutral" />
         <StatCard label="PRODUCTIVIDAD DEL EQUIPO" value={`${stats.completionRate}%`} hint="Tareas completadas vs. perdidas." tone="success" />
         <StatCard label="MIEMBROS DEL EQUIPO" value={members.length} hint="Personas en tu organización." tone="neutral" />
+        <StatCard
+          label="PENDIENTES DE CONFIRMACIÓN"
+          value={pendientesDeConfirmacion.length}
+          hint={pendientesDeConfirmacion.length > 0 ? 'Esperando tu revisión.' : 'Todo al día.'}
+          tone={pendientesDeConfirmacion.length > 0 ? 'danger' : 'success'}
+        />
       </div>
 
       {pendientesDeConfirmacion.length > 0 && (
@@ -153,19 +171,65 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
         </div>
       )}
 
-      <div className="dashboard-tasks-section">
-        <div className="dashboard-tasks-section-header">
-          <h2>Tareas del equipo</h2>
-          <button className="btn-primary dashboard-assign-btn" onClick={() => setIsModalOpen(true)}>
-            <Plus size={16} /> Asignar Nueva Tarea
-          </button>
+      <div className="dashboard-company-widgets">
+        <div className="dashboard-widget card-panel">
+          <div className="dashboard-widget-header">
+            <h2>Actividad semanal de tareas</h2>
+          </div>
+          {tasks.length === 0 ? (
+            <p className="empty-state">Todavía no hay actividad para mostrar.</p>
+          ) : (
+            <>
+              <div className="dashboard-activity-chart">
+                {actividadSemanal.map((dia) => (
+                  <div key={dia.label} className="dashboard-activity-bar-col">
+                    <div className="dashboard-activity-bar-track">
+                      <div
+                        className="dashboard-activity-bar is-completadas"
+                        title={`${dia.completadas} completadas`}
+                        style={{ height: `${(dia.completadas / maxActividad) * 100}%` }}
+                      />
+                      <div
+                        className="dashboard-activity-bar is-asignadas"
+                        title={`${dia.asignadas} asignadas`}
+                        style={{ height: `${(dia.asignadas / maxActividad) * 100}%` }}
+                      />
+                    </div>
+                    <span className="dashboard-activity-day">{dia.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="dashboard-activity-legend">
+                <span><i className="dashboard-legend-dot is-completadas" />Completadas</span>
+                <span><i className="dashboard-legend-dot is-asignadas" />Asignadas</span>
+              </div>
+            </>
+          )}
         </div>
 
-        {tareasActivas.length === 0 ? (
-          <p className="empty-state">No hay tareas activas. ¡Asigná la primera arriba!</p>
-        ) : (
-          <TaskTable tasks={tareasActivas} onToggle={handleToggle} onDelete={handleDelete} />
-        )}
+        <div className="dashboard-widget card-panel">
+          <div className="dashboard-widget-header">
+            <h2>Carga de trabajo por proyecto</h2>
+          </div>
+          {cargaPorProyecto.length === 0 ? (
+            <p className="empty-state">Todavía no hay proyectos.</p>
+          ) : (
+            <div className="dashboard-workload-list">
+              {cargaPorProyecto.map((project) => (
+                <div key={project._id} className="dashboard-workload-item">
+                  <div className="dashboard-project-row">
+                    <span>{project.name}</span>
+                    <span>{project.activas} activa{project.activas === 1 ? '' : 's'}</span>
+                  </div>
+                  <div className="dashboard-project-track">
+                    <div className={`dashboard-project-fill ${project.sobrecarga ? 'is-overload' : ''}`} style={{ width: `${project.porcentaje}%` }} />
+                  </div>
+                  {project.sobrecarga && <span className="dashboard-workload-flag">Más tareas activas que completadas</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <NewTaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreated={onRefresh} />
@@ -174,21 +238,13 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
 };
 
 // --- Vista Empleado (member) ---
-const EmployeeView = ({ user, tasks, stats, projects, members, navigate }) => {
-  const misTareas = tasks
-    .filter((t) => !t.completed && String(t.assignedTo?._id || t.assignedTo) === String(user?._id))
-    .sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0))
-    .slice(0, 5);
+const EmployeeView = ({ user, tasks, stats, navigate }) => {
+  const misTareasHoy = tasks
+    .filter((t) => !t.completed && isTodayRelevant(t) && String(t.assignedTo?._id || t.assignedTo) === String(user?._id))
+    .sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0));
 
   const tareasDeHoy = tasks.filter((t) => !t.completed && isTodayRelevant(t));
   const urgentes = tareasDeHoy.filter((t) => t.priority === 'high').length;
-
-  const proyectosConProgreso = projects.map((project) => {
-    const tareasDelProyecto = tasks.filter((t) => (t.project?._id || t.project) === project._id);
-    const completadas = tareasDelProyecto.filter((t) => t.completed).length;
-    const progreso = tareasDelProyecto.length === 0 ? 0 : Math.round((completadas / tareasDelProyecto.length) * 100);
-    return { ...project, progreso };
-  });
 
   return (
     <div className="dashboard-page">
@@ -213,13 +269,13 @@ const EmployeeView = ({ user, tasks, stats, projects, members, navigate }) => {
       <div className="dashboard-widgets">
         <div className="dashboard-widget card-panel">
           <div className="dashboard-widget-header">
-            <h2>Mis tareas</h2>
+            <h2>Mis tareas de hoy</h2>
           </div>
-          {misTareas.length === 0 ? (
-            <p className="empty-state">No tenés tareas pendientes asignadas. 🎉</p>
+          {misTareasHoy.length === 0 ? (
+            <p className="empty-state">No tenés tareas asignadas para hoy. 🎉</p>
           ) : (
             <ul className="dashboard-task-list">
-              {misTareas.map((task) => {
+              {misTareasHoy.map((task) => {
                 const color = getProjectColor(task.project?.color);
                 return (
                   <li key={task._id}>
@@ -240,53 +296,9 @@ const EmployeeView = ({ user, tasks, stats, projects, members, navigate }) => {
               })}
             </ul>
           )}
-          <button className="dashboard-widget-link" onClick={() => navigate('/app/inbox')}>
+          <button className="dashboard-widget-link" onClick={() => navigate('/app/mytasks')}>
             Ver todas las tareas <ArrowRight size={14} />
           </button>
-        </div>
-
-        <div className="dashboard-widget card-panel">
-          <div className="dashboard-widget-header">
-            <h2>Proyectos activos</h2>
-          </div>
-          {proyectosConProgreso.length === 0 ? (
-            <p className="empty-state">Todavía no hay proyectos.</p>
-          ) : (
-            <ul className="dashboard-project-list">
-              {proyectosConProgreso.map((project) => (
-                <li key={project._id}>
-                  <div className="dashboard-project-row">
-                    <span>{project.name}</span>
-                    <span>{project.progreso}%</span>
-                  </div>
-                  <div className="dashboard-project-track">
-                    <div className="dashboard-project-fill" style={{ width: `${project.progreso}%` }} />
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div className="dashboard-widget card-panel">
-          <div className="dashboard-widget-header">
-            <h2>Equipo</h2>
-          </div>
-          {members.length === 0 ? (
-            <p className="empty-state">No hay miembros para mostrar.</p>
-          ) : (
-            <ul className="dashboard-team-list">
-              {members.map((m) => (
-                <li key={m.id}>
-                  <div className="dashboard-team-avatar">{`${m.name?.[0] || ''}${m.lastname?.[0] || ''}`.toUpperCase()}</div>
-                  <div>
-                    <p className="dashboard-task-title">{m.name} {m.lastname}</p>
-                    <span className="dashboard-task-meta">{m.role === 'admin' ? 'Administrador' : 'Miembro'}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
         </div>
       </div>
     </div>

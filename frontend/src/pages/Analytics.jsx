@@ -1,21 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getTaskStats } from '../services/taskService';
+import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import StatCard from '../components/StatCard';
 import './Analytics.css';
 
 const Analytics = () => {
   const { projects } = useOrg();
+  const { user } = useAuth();
+  const esEmpresa = user?.accountType === 'empresa';
   const [stats, setStats] = useState(null);
 
   const cargarStats = useCallback(async () => {
     try {
-      const data = await getTaskStats();
+      const data = await getTaskStats(esEmpresa ? {} : { mine: true });
       setStats(data);
     } catch (error) {
       console.error('Error al cargar analíticas:', error);
     }
-  }, []);
+  }, [esEmpresa]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

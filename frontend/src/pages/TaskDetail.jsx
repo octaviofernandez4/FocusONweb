@@ -41,12 +41,20 @@ const TaskDetail = () => {
     }
   }, [id]);
 
+  // Ojo: React Router no remonta el componente al navegar de una tarea a otra
+  // (misma ruta, distinto :id) — hay que resincronizar "a mano" cada vez que
+  // cambia el id, si no la tarea vieja queda pegada en el estado.
   useEffect(() => {
-    if (!location.state?.task) {
+    if (location.state?.task && location.state.task._id === id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTask(location.state.task);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
       cargar();
     }
-  }, [cargar, location.state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   if (isLoading) return <p className="empty-state">Cargando tarea…</p>;
   if (!task) return <p className="empty-state">No se encontró esa tarea.</p>;

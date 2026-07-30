@@ -2,7 +2,6 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Inbox, ListChecks, CheckCircle2, BarChart3, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import { getProjectColor } from '../utils/projectColors';
 import './Sidebar.css';
 
 const navItems = [
@@ -16,7 +15,7 @@ const navItems = [
 
 const Sidebar = () => {
   const { logout } = useAuth();
-  const { org, projects } = useOrg();
+  const { org } = useOrg();
   const navigate = useNavigate();
 
   const cerrarSesion = () => {
@@ -49,21 +48,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-
-      {projects.length > 0 && (
-        <div className="sidebar-projects">
-          <p className="sidebar-section-title">Proyectos</p>
-          {projects.map((project) => {
-            const color = getProjectColor(project.color);
-            return (
-              <NavLink key={project._id} to={`/app/projects?id=${project._id}`} className="sidebar-project-item">
-                <span className="sidebar-project-dot" style={{ background: color.dot }} />
-                {project.name}
-              </NavLink>
-            );
-          })}
-        </div>
-      )}
 
       <div className="sidebar-footer">
         <NavLink to="/app/settings" className={({ isActive }) => `sidebar-footer-link ${isActive ? 'is-active' : ''}`}>

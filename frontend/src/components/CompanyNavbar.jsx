@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, CheckCircle2, FolderKanban, BarChart3, Settings, LogOut, Building2, Pencil } from 'lucide-react';
+import { LayoutDashboard, Inbox, CheckCircle2, FolderKanban, Settings, LogOut, Building2, Pencil } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { updateOrg } from '../services/orgService';
@@ -13,7 +13,6 @@ const navItems = [
   { to: '/app/inbox', label: 'Tareas del equipo', icon: Inbox },
   { to: '/app/completed', label: 'Completadas', icon: CheckCircle2 },
   { to: '/app/projects', label: 'Proyectos', icon: FolderKanban },
-  { to: '/app/analytics', label: 'Analíticas', icon: BarChart3 },
   { to: '/app/settings', label: 'Configuración', icon: Settings },
 ];
 
@@ -67,7 +66,7 @@ const CompanyNavbar = () => {
             onClick={() => logoInputRef.current?.click()}
             disabled={isUploadingLogo}
           >
-            <Pencil size={13} />
+            <Pencil size={11} />
           </button>
           <input
             ref={logoInputRef}

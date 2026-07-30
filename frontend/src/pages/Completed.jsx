@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { getTasks, getTaskStats, restoreAllTasks, clearAllCompletedTasks } from '../services/taskService';
+import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { isSameLocalDay } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
@@ -21,16 +22,19 @@ const Completed = () => {
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
   const { isAdmin } = useOrg();
+  const { user } = useAuth();
+  const esEmpresa = user?.accountType === 'empresa';
 
   const cargarDatos = useCallback(async () => {
     try {
-      const [tareas, estadisticas] = await Promise.all([getTasks(), getTaskStats()]);
+      const opciones = esEmpresa ? {} : { mine: true };
+      const [tareas, estadisticas] = await Promise.all([getTasks(opciones), getTaskStats(opciones)]);
       setTasks(tareas);
       setStats(estadisticas);
     } catch (error) {
       console.error('Error al cargar completadas:', error);
     }
-  }, []);
+  }, [esEmpresa]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect

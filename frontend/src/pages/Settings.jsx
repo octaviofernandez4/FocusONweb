@@ -105,7 +105,7 @@ const Settings = () => {
   };
 
   return (
-    <div className="settings-page">
+    <div className={`settings-page ${esEmpresa ? 'settings-page-company' : ''}`}>
       <h1>Configuración</h1>
       <p className="page-subtitle">
         {esEmpresa ? 'Gestioná el perfil de la empresa y tu equipo.' : 'Gestioná tus preferencias de cuenta y tu perfil profesional.'}

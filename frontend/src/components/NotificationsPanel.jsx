@@ -82,7 +82,7 @@ const NotificationsPanel = () => {
   return (
     <div className="notif-wrap" ref={wrapRef}>
       <button className="icon-btn notif-trigger" title="Notificaciones" onClick={abrir}>
-        <Bell size={17} />
+        <Bell size={20} />
         {badgeCount > 0 && <span className="notif-badge">{badgeCount}</span>}
       </button>
 
