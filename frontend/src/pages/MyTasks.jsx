@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
@@ -16,6 +17,7 @@ const formatFechaHora = (dueDate) => {
 const MyTasks = () => {
   const { user } = useAuth();
   const { projects } = useOrg();
+  const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [vista, setVista] = useState('hoy');
@@ -62,6 +64,8 @@ const MyTasks = () => {
     }
   };
 
+  const abrirTarea = (task) => navigate(`/app/tasks/${task._id}`, { state: { task } });
+
   return (
     <div className="mytasks-page">
       <h1>Mis tareas</h1>
@@ -81,17 +85,16 @@ const MyTasks = () => {
           ) : (
             <ul className="mytasks-list">
               {visibles.map((task) => (
-                <li key={task._id} className="mytasks-item">
+                <li key={task._id} className="mytasks-item is-clickable" onClick={() => abrirTarea(task)}>
                   <button
                     className={`mytasks-checkbox ${task.pendingReview ? 'is-checked' : ''}`}
                     title={task.pendingReview ? 'Deshacer' : 'Marcar como lista'}
-                    onClick={() => handleToggle(task)}
+                    onClick={(e) => { e.stopPropagation(); handleToggle(task); }}
                   >
                     {task.pendingReview && <Check size={13} />}
                   </button>
                   <div className="mytasks-item-body">
                     <p className="mytasks-item-title">{task.title}</p>
-                    {task.description && <p className="mytasks-item-desc">{task.description}</p>}
                     <span className="mytasks-item-meta">
                       {task.project?.name && <>{task.project.name} · </>}
                       {formatFechaHora(task.dueDate)}
@@ -112,7 +115,7 @@ const MyTasks = () => {
               <p className="mytasks-completed-title">Completadas ({completadas.length})</p>
               <ul className="mytasks-list">
                 {completadas.slice(0, 5).map((task) => (
-                  <li key={task._id} className="mytasks-item is-done">
+                  <li key={task._id} className="mytasks-item is-done is-clickable" onClick={() => abrirTarea(task)}>
                     <span className="mytasks-checkbox is-checked is-locked"><Check size={13} /></span>
                     <div className="mytasks-item-body">
                       <p className="mytasks-item-title is-done">{task.title}</p>
