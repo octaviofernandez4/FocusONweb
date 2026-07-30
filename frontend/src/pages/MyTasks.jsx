@@ -1,9 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, CheckCircle2 } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import Modal from '../components/Modal';
 import './MyTasks.css';
 
 const formatFechaHora = (dueDate) => {
@@ -20,6 +21,7 @@ const MyTasks = () => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
+  const [tareaAConfirmar, setTareaAConfirmar] = useState(null);
 
   const cargarTareas = useCallback(async () => {
     try {
@@ -76,6 +78,22 @@ const MyTasks = () => {
     }
   };
 
+  // Marcar como lista pide confirmación (es lo que dispara la revisión de la empresa);
+  // deshacerla no, ya que no tiene consecuencias para nadie más.
+  const handleCheckboxClick = (task) => {
+    if (task.pendingReview) {
+      handleToggle(task);
+    } else {
+      setTareaAConfirmar(task);
+    }
+  };
+
+  const confirmarRealizacion = async () => {
+    if (!tareaAConfirmar) return;
+    await handleToggle(tareaAConfirmar);
+    setTareaAConfirmar(null);
+  };
+
   const abrirTarea = (task) => navigate(`/app/tasks/${task._id}`, { state: { task } });
 
   return (
@@ -107,7 +125,7 @@ const MyTasks = () => {
                   <button
                     className={`mytasks-checkbox ${task.pendingReview ? 'is-checked' : ''}`}
                     title={task.pendingReview ? 'Deshacer' : 'Marcar como lista'}
-                    onClick={(e) => { e.stopPropagation(); handleToggle(task); }}
+                    onClick={(e) => { e.stopPropagation(); handleCheckboxClick(task); }}
                   >
                     {task.pendingReview && <Check size={13} />}
                   </button>
@@ -170,6 +188,21 @@ const MyTasks = () => {
           )}
         </div>
       </div>
+
+      <Modal isOpen={!!tareaAConfirmar} onClose={() => setTareaAConfirmar(null)} title="Confirmar tarea">
+        <div className="confirm-task">
+          <div className="confirm-task-icon"><CheckCircle2 size={26} /></div>
+          <h3>¿Confirmar realización de la tarea?</h3>
+          <p>
+            {tareaAConfirmar && `"${tareaAConfirmar.title}"`} se va a marcar como lista para revisión y tu
+            supervisor va a recibir la notificación.
+          </p>
+          <div className="confirm-task-actions">
+            <button className="btn-ghost" onClick={() => setTareaAConfirmar(null)}>Cancelar</button>
+            <button className="btn-primary" onClick={confirmarRealizacion}>Sí, confirmar</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };

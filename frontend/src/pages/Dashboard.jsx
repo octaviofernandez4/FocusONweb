@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, FileBarChart, ArrowRight, Check, X, Plus } from 'lucide-react';
+import { CalendarDays, ArrowRight, Check, X, Plus } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask } from '../services/taskService';
 import { listMembers } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
@@ -61,14 +61,19 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const pendientesDeConfirmacion = tasks.filter((t) => t.pendingReview && !t.completed);
 
-  // Actividad real de los últimos 5 días: cuántas tareas se crearon vs. se
-  // completaron cada día (no hay datos inventados, sale de createdAt/completedAt).
+  // Actividad real de la semana en curso (lunes a sábado, sin domingo): cuántas
+  // tareas se crearon vs. se completaron cada día (sale de createdAt/completedAt).
   const actividadSemanal = useMemo(() => {
     const hoy = new Date();
+    const diaSemana = hoy.getDay(); // 0=Dom, 1=Lun, ... 6=Sáb
+    const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+    const lunes = new Date(hoy);
+    lunes.setDate(hoy.getDate() - diasDesdeElLunes);
+
     const dias = [];
-    for (let i = 4; i >= 0; i--) {
-      const fecha = new Date(hoy);
-      fecha.setDate(hoy.getDate() - i);
+    for (let i = 0; i < 6; i++) {
+      const fecha = new Date(lunes);
+      fecha.setDate(lunes.getDate() + i);
       const completadas = tasks.filter((t) => t.completedAt && isSameLocalDay(t.completedAt, fecha)).length;
       const asignadas = tasks.filter((t) => t.createdAt && isSameLocalDay(t.createdAt, fecha)).length;
       dias.push({ label: NOMBRES_DIA[fecha.getDay()], completadas, asignadas });
@@ -76,6 +81,9 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
     return dias;
   }, [tasks]);
   const maxActividad = Math.max(1, ...actividadSemanal.flatMap((d) => [d.completadas, d.asignadas]));
+  const totalCompletadasSemana = actividadSemanal.reduce((sum, d) => sum + d.completadas, 0);
+  const totalAsignadasSemana = actividadSemanal.reduce((sum, d) => sum + d.asignadas, 0);
+  const porcentajeCompletadasSemana = totalAsignadasSemana === 0 ? 0 : Math.round((totalCompletadasSemana / totalAsignadasSemana) * 100);
 
   // Carga de trabajo real por proyecto: tareas activas ahora mismo, normalizadas
   // contra el proyecto más cargado. "Sobrecarga" = tiene más tareas activas que completadas.
@@ -118,14 +126,8 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
           <p className="page-subtitle">Estado en tiempo real del desempeño y la actividad de tu equipo.</p>
         </div>
         <div className="dashboard-header-actions">
-          <button className="btn-ghost" onClick={() => alert('Próximamente: filtro por período')}>
-            <CalendarDays size={16} /> Este trimestre
-          </button>
           <button className="btn-primary dashboard-assign-btn" onClick={() => setIsModalOpen(true)}>
             <Plus size={16} /> Asignar Nueva Tarea
-          </button>
-          <button className="btn-ghost" onClick={() => alert('Próximamente: generación de reportes')}>
-            <FileBarChart size={16} /> Generar reporte
           </button>
         </div>
       </div>
@@ -200,7 +202,7 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
                 ))}
               </div>
               <div className="dashboard-activity-legend">
-                <span><i className="dashboard-legend-dot is-completadas" />Completadas</span>
+                <span><i className="dashboard-legend-dot is-completadas" />Completadas ({porcentajeCompletadasSemana}%)</span>
                 <span><i className="dashboard-legend-dot is-asignadas" />Asignadas</span>
               </div>
             </>
@@ -278,7 +280,11 @@ const EmployeeView = ({ user, tasks, stats, navigate }) => {
               {misTareasHoy.map((task) => {
                 const color = getProjectColor(task.project?.color);
                 return (
-                  <li key={task._id}>
+                  <li
+                    key={task._id}
+                    className="is-clickable"
+                    onClick={() => navigate(`/app/tasks/${task._id}`, { state: { task } })}
+                  >
                     <div>
                       <p className="dashboard-task-title">{task.title}</p>
                       <span className="dashboard-task-meta">

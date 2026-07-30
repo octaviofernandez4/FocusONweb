@@ -33,10 +33,15 @@ const TaskTable = ({ tasks, onToggle, onDelete }) => {
         </thead>
         <tbody>
           {tasks.map((task) => {
-            const { estado, puedeTocarCheck, puedeBorrar, tituloBoton } = getTaskAccess(task, user);
+            const { estado, esEmpresa, esAsignatario, puedeTocarCheck, puedeBorrar, tituloBoton } = getTaskAccess(task, user);
+            const puedeAbrir = esEmpresa || esAsignatario;
             const color = getProjectColor(task.project?.color);
             return (
-              <tr key={task._id} className="is-clickable" onClick={() => abrirTarea(task)}>
+              <tr
+                key={task._id}
+                className={puedeAbrir ? 'is-clickable' : ''}
+                onClick={puedeAbrir ? () => abrirTarea(task) : undefined}
+              >
                 <td>
                   <p className="task-table-title">{task.title}</p>
                   {task.project?.name && (
