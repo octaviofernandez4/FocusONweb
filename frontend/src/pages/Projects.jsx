@@ -136,11 +136,9 @@ const Projects = () => {
                   <button className="icon-btn" title="Editar proyecto" onClick={() => abrirEdicion(project)}>
                     <Pencil size={13} />
                   </button>
-                  {!project.isDefault && (
-                    <button className="icon-btn icon-btn-danger" title="Borrar proyecto" onClick={() => handleEliminarProyecto(project)}>
-                      <Trash2 size={13} />
-                    </button>
-                  )}
+                  <button className="icon-btn icon-btn-danger" title="Borrar proyecto" onClick={() => handleEliminarProyecto(project)}>
+                    <Trash2 size={13} />
+                  </button>
                 </div>
               )}
             </div>

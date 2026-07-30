@@ -1,37 +1,11 @@
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 1rem;
   padding: 0.9rem 0 1.6rem;
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 1.8rem;
-}
-
-.topbar-search {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex: 1;
-  max-width: 380px;
-  background: rgba(15, 23, 42, 0.6);
-  border: 1px solid var(--border-subtle);
-  border-radius: 999px;
-  padding: 0.55rem 1rem;
-  color: var(--text-muted);
-}
-
-.topbar-search input {
-  flex: 1;
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-size: 0.85rem;
-}
-
-.topbar-search input::placeholder {
-  color: var(--text-muted);
 }
 
 .topbar-actions {
@@ -51,8 +25,28 @@
   font-size: 0.8rem;
   background: var(--gradient-brand);
   color: white;
+  border: none;
+  cursor: pointer;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-@media (max-width: 640px) {
-  .topbar-search { display: none; }
+.topbar-avatar:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.topbar-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.topbar-avatar-spinner {
+  animation: spin 0.9s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

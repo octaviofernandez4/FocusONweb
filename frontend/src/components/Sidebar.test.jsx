@@ -22,7 +22,7 @@ vi.mock('../services/projectService', () => ({
   deleteProject: vi.fn(),
 }));
 
-const renderSidebar = (initialRoute = '/app/today') => {
+const renderSidebar = (initialRoute = '/app/dashboard') => {
   getCurrentOrg.mockResolvedValue({ organizacion: { name: 'Organización de prueba' }, role: 'admin' });
   getProjects.mockResolvedValue([]);
 
@@ -50,7 +50,6 @@ describe('Sidebar', () => {
 
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
     expect(screen.getByText('Mis tareas')).toBeInTheDocument();
-    expect(screen.getByText('Hoy')).toBeInTheDocument();
     expect(screen.getByText('Tareas del equipo')).toBeInTheDocument();
     expect(screen.getByText('Completadas')).toBeInTheDocument();
     expect(screen.getByText('Analíticas')).toBeInTheDocument();
@@ -65,7 +64,7 @@ describe('Sidebar', () => {
     const link = screen.getByText('Completadas').closest('a');
     expect(link.className).toContain('is-active');
 
-    const otherLink = screen.getByText('Hoy').closest('a');
+    const otherLink = screen.getByText('Dashboard').closest('a');
     expect(otherLink.className).not.toContain('is-active');
   });
 });

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, CalendarCheck, ListChecks, CheckCircle2, BarChart3, FolderKanban, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Inbox, ListChecks, CheckCircle2, BarChart3, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { getProjectColor } from '../utils/projectColors';
@@ -8,19 +8,15 @@ import './Sidebar.css';
 const navItems = [
   { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/app/mytasks', label: 'Mis tareas', icon: ListChecks },
-  { to: '/app/today', label: 'Hoy', icon: CalendarCheck },
   { to: '/app/inbox', label: 'Tareas del equipo', icon: Inbox },
   { to: '/app/completed', label: 'Completadas', icon: CheckCircle2 },
   { to: '/app/projects', label: 'Proyectos', icon: FolderKanban },
   { to: '/app/analytics', label: 'Analíticas', icon: BarChart3 },
 ];
 
-const getInitials = (name, lastname) =>
-  `${name?.[0] || ''}${lastname?.[0] || ''}`.toUpperCase() || '?';
-
 const Sidebar = () => {
-  const { user, logout } = useAuth();
-  const { projects } = useOrg();
+  const { logout } = useAuth();
+  const { org, projects } = useOrg();
   const navigate = useNavigate();
 
   const cerrarSesion = () => {
@@ -30,12 +26,15 @@ const Sidebar = () => {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-profile">
-        <div className="sidebar-avatar">{getInitials(user?.name, user?.lastname)}</div>
-        <div>
-          <p className="sidebar-username">{user ? `${user.name} ${user.lastname}` : '…'}</p>
-          <p className="sidebar-status">{user?.statusText || 'Enfocado'}</p>
-        </div>
+      <div className="sidebar-company">
+        {org?.logoUrl ? (
+          <img src={org.logoUrl} alt="Logo de la empresa" className="sidebar-company-logo" />
+        ) : (
+          <div className="sidebar-company-logo sidebar-company-logo-placeholder">
+            <Building2 size={18} />
+          </div>
+        )}
+        <p className="sidebar-company-name">{org?.name || 'Tu empresa'}</p>
       </div>
 
       <nav className="sidebar-nav">

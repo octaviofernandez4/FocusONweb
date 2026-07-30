@@ -9,7 +9,6 @@ const User = require('../src/models/User');
 const Task = require('../src/models/Task');
 const Organization = require('../src/models/Organization');
 const Membership = require('../src/models/Membership');
-const ensureDefaultProject = require('../src/utils/ensureDefaultProject');
 
 const migrar = async () => {
     await mongoose.connect(process.env.MONGODB_URI);
@@ -33,8 +32,6 @@ const migrar = async () => {
                 role: 'admin'
             });
 
-            await ensureDefaultProject(organizacion._id, usuario._id);
-
             usuariosMigrados++;
         }
 
@@ -53,15 +50,12 @@ const migrar = async () => {
         const membresia = await Membership.findOne({ user: tarea.user });
         if (!membresia) continue;
 
-        const proyectoGeneral = await ensureDefaultProject(membresia.org, tarea.user);
-
         tarea.org = membresia.org;
-        tarea.project = proyectoGeneral._id;
         await tarea.save();
         tareasMigradas++;
     }
 
-    console.log(`✅ ${tareasMigradas} tarea(s) reasignadas a su organización y proyecto General`);
+    console.log(`✅ ${tareasMigradas} tarea(s) reasignadas a su organización`);
 
     await mongoose.disconnect();
     console.log('🏁 Migración completa');

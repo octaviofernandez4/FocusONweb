@@ -5,7 +5,7 @@ import Register from './pages/Register';
 import JoinInvite from './pages/JoinInvite';
 import Dashboard from './pages/Dashboard';
 import MyTasks from './pages/MyTasks';
-import TodayFocus from './pages/TodayFocus';
+import TaskDetail from './pages/TaskDetail';
 import Inbox from './pages/Inbox';
 import Completed from './pages/Completed';
 import Projects from './pages/Projects';
@@ -33,7 +33,7 @@ function App() {
           <Route index element={<Navigate to="dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="mytasks" element={<MyTasks />} />
-          <Route path="today" element={<TodayFocus />} />
+          <Route path="tasks/:id" element={<TaskDetail />} />
           <Route path="inbox" element={<Inbox />} />
           <Route path="completed" element={<Completed />} />
           <Route path="projects" element={<Projects />} />

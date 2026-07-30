@@ -28,6 +28,7 @@ const validarActualizacionPerfil = [
     check('name').optional().not().isEmpty().withMessage('El nombre no puede estar vacío'),
     check('lastname').optional().not().isEmpty().withMessage('El apellido no puede estar vacío'),
     check('statusText').optional().trim(),
+    check('avatarUrl').optional({ checkFalsy: true }).isString().withMessage('La foto de perfil no es válida'),
 
     (req, res, next) => {
         const errors = validationResult(req);

@@ -15,6 +15,7 @@ const validarTarea = [
         })
         .withMessage('El proyecto no es válido'),
     check('assignedToEmail').optional({ checkFalsy: true }).isEmail().withMessage('El email de la persona asignada no es válido'),
+    check('attachments').optional().isArray().withMessage('Los adjuntos deben ser una lista'),
 
     (req, res, next) => {
         const errors = validationResult(req);

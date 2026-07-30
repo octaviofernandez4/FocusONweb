@@ -204,9 +204,3 @@
   padding: 0.65rem 1.2rem;
   font-size: 0.85rem;
 }
-
-.dashboard-tasks-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 1rem;
-}

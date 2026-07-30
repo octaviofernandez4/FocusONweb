@@ -104,49 +104,6 @@
   border-color: transparent;
 }
 
-.inbox-table-wrap {
-  overflow-x: auto;
-}
-
-.inbox-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 640px;
-}
-
-.inbox-table th {
-  text-align: left;
-  font-size: 0.7rem;
-  letter-spacing: 0.05em;
-  color: var(--text-muted);
-  font-weight: 700;
-  padding: 1rem 1.2rem;
-  border-bottom: 1px solid var(--border-subtle);
-}
-
-.inbox-table td {
-  padding: 0.9rem 1.2rem;
-  border-bottom: 1px solid var(--border-subtle);
-  font-size: 0.85rem;
-  color: var(--text-secondary);
-  vertical-align: middle;
-}
-
-.inbox-table tr:last-child td {
-  border-bottom: none;
-}
-
-.inbox-table-title {
-  color: var(--text-primary);
-  font-weight: 600;
-  margin-bottom: 0.35rem;
-}
-
-.inbox-table-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
 .inbox-pagination {
   display: flex;
   align-items: center;

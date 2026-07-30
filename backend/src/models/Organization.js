@@ -11,6 +11,20 @@ const organizationSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    logoUrl: {
+        type: String,
+        default: null
+    },
+    industry: {
+        type: String,
+        default: '',
+        trim: true
+    },
+    address: {
+        type: String,
+        default: '',
+        trim: true
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
