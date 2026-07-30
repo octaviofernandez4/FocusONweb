@@ -9,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const orgRoutes = require('./routes/orgRoutes');
 const projectRoutes = require('./routes/projectRoutes');
+const uploadRoutes = require('./routes/uploadRoutes');
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.use('/api', userRoutes);
 app.use('/api/tasks', taskRoutes);
 app.use('/api/orgs', orgRoutes);
 app.use('/api/projects', projectRoutes);
+app.use('/api/uploads', uploadRoutes);
 
 // Ruta de prueba
 app.get('/api', (req, res) => {
