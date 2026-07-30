@@ -59,7 +59,10 @@ const NotificationsCenter = () => {
 
   const seleccionada = items.find((n) => n.id === seleccionadaId) || items[0] || null;
 
-  const irATarea = () => navigate('/app/inbox');
+  const irATarea = (task) => {
+    if (task) navigate(`/app/tasks/${task._id}`, { state: { task } });
+    else navigate('/app/inbox');
+  };
   const ignorar = (id) => setIgnoradas((prev) => [...prev, id]);
   const marcarTodasLeidas = () => setLeidas(true);
 
@@ -126,7 +129,7 @@ const NotificationsCenter = () => {
               )}
 
               <div className="notifcenter-detail-actions">
-                <button className="btn-primary notifcenter-detail-btn" onClick={irATarea}>Abrir Tarea</button>
+                <button className="btn-primary notifcenter-detail-btn" onClick={() => irATarea(seleccionada.task)}>Abrir Tarea</button>
                 {esEmpresa && seleccionada.task && (
                   <button className="btn-ghost notifcenter-detail-btn" onClick={() => setReasignando(seleccionada.task)}>
                     Reasignar

@@ -31,7 +31,7 @@ const Sidebar = () => {
           <img src={org.logoUrl} alt="Logo de la empresa" className="sidebar-company-logo" />
         ) : (
           <div className="sidebar-company-logo sidebar-company-logo-placeholder">
-            <Building2 size={18} />
+            <Building2 size={44} />
           </div>
         )}
         <p className="sidebar-company-name">{org?.name || 'Tu empresa'}</p>

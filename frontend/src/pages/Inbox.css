@@ -55,7 +55,7 @@
   gap: 0.6rem;
   flex: 1;
   min-width: 220px;
-  max-width: 380px;
+  max-width: 480px;
   background: rgba(15, 23, 42, 0.6);
   border: 1px solid var(--border-subtle);
   border-radius: 999px;
@@ -74,34 +74,6 @@
 
 .inbox-search input::placeholder {
   color: var(--text-muted);
-}
-
-.inbox-filter-chips {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.inbox-filter-chip {
-  padding: 0.5rem 1rem;
-  border-radius: 999px;
-  border: 1px solid var(--border-subtle);
-  background: rgba(15, 23, 42, 0.5);
-  color: var(--text-secondary);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.inbox-filter-chip:hover {
-  color: var(--text-primary);
-}
-
-.inbox-filter-chip.is-active {
-  background: var(--gradient-brand);
-  color: white;
-  border-color: transparent;
 }
 
 .inbox-pagination {

@@ -12,6 +12,7 @@ const PAGE_SIZE = 8;
 
 // "Tareas del equipo" — vista de tabla compartida por ambas cuentas. Las acciones
 // de cada fila (check/borrar) respetan las mismas reglas que TaskCard (ver utils/taskAccess).
+// El buscador filtra por título de tarea o por nombre de proyecto.
 const Inbox = () => {
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
@@ -20,7 +21,6 @@ const Inbox = () => {
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
-  const [filtro, setFiltro] = useState('todas');
   const [pagina, setPagina] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
@@ -45,21 +45,17 @@ const Inbox = () => {
 
   const filtradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase();
-    return pendientes
-      .filter((t) => !texto || t.title.toLowerCase().includes(texto))
-      .filter((t) => {
-        if (filtro === 'mias') return String(t.assignedTo?._id || t.assignedTo) === String(user?._id);
-        if (filtro === 'alta') return t.priority === 'high';
-        return true;
-      });
-  }, [pendientes, busqueda, filtro, user]);
+    if (!texto) return pendientes;
+    return pendientes.filter((t) =>
+      t.title.toLowerCase().includes(texto) || (t.project?.name || '').toLowerCase().includes(texto)
+    );
+  }, [pendientes, busqueda]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
   const paginaActual = Math.min(pagina, totalPaginas);
   const visibles = filtradas.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
 
   const cambiarBusqueda = (valor) => { setBusqueda(valor); setPagina(1); };
-  const cambiarFiltro = (valor) => { setFiltro(valor); setPagina(1); };
 
   const handleToggle = async (task) => {
     const { esEmpresa: puedeConfirmar } = getTaskAccess(task, user);
@@ -117,15 +113,10 @@ const Inbox = () => {
           <Search size={16} />
           <input
             type="text"
-            placeholder="Filtrar tareas…"
+            placeholder="Filtrar tareas… (por título o proyecto)"
             value={busqueda}
             onChange={(e) => cambiarBusqueda(e.target.value)}
           />
-        </div>
-        <div className="inbox-filter-chips">
-          <button className={`inbox-filter-chip ${filtro === 'todas' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('todas')}>Todas</button>
-          <button className={`inbox-filter-chip ${filtro === 'mias' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('mias')}>Mis tareas</button>
-          <button className={`inbox-filter-chip ${filtro === 'alta' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('alta')}>Alta prioridad</button>
         </div>
       </div>
 
