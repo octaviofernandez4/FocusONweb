@@ -61,8 +61,12 @@ const NotificationsPanel = () => {
   const nuevasVisibles = nuevas.slice(0, NUEVAS_LIMITE);
   const anterioresVisibles = todasAnteriores.slice(0, ANTERIORES_LIMITE);
 
-  const irATarea = () => {
-    navigate('/app/inbox');
+  const irATarea = (task) => {
+    if (task) {
+      navigate(`/app/tasks/${task._id}`, { state: { task } });
+    } else {
+      navigate('/app/inbox');
+    }
     setIsOpen(false);
   };
 
@@ -107,7 +111,7 @@ const NotificationsPanel = () => {
                       </div>
                       <p className="notif-item-text">{n.text}</p>
                       <div className="notif-item-actions">
-                        <button className="btn-primary notif-action-btn" onClick={irATarea}>Ver Tarea</button>
+                        <button className="btn-primary notif-action-btn" onClick={() => irATarea(n.task)}>Ver Tarea</button>
                         <button className="btn-ghost notif-action-btn" onClick={() => ignorar(n.id)}>Ignorar</button>
                       </div>
                     </div>

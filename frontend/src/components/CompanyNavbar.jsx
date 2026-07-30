@@ -17,13 +17,10 @@ const navItems = [
   { to: '/app/settings', label: 'Configuración', icon: Settings },
 ];
 
-const getInitials = (name, lastname) =>
-  `${name?.[0] || ''}${lastname?.[0] || ''}`.toUpperCase() || '?';
-
 // Navbar horizontal completo de la cuenta empresa — sin sidebar, a propósito
 // bien distinto del layout de la cuenta empleado.
 const CompanyNavbar = () => {
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { org, refreshOrg } = useOrg();
   const navigate = useNavigate();
   const logoInputRef = useRef(null);
@@ -70,7 +67,7 @@ const CompanyNavbar = () => {
             onClick={() => logoInputRef.current?.click()}
             disabled={isUploadingLogo}
           >
-            <Pencil size={11} />
+            <Pencil size={13} />
           </button>
           <input
             ref={logoInputRef}
@@ -85,7 +82,6 @@ const CompanyNavbar = () => {
 
         <div className="company-navbar-actions">
           <NotificationsPanel />
-          <div className="company-navbar-avatar">{getInitials(user?.name, user?.lastname)}</div>
           <button className="icon-btn" title="Salir" onClick={cerrarSesion}>
             <LogOut size={19} />
           </button>
