@@ -3,6 +3,7 @@ import { Search, Plus, FileDown, ChevronLeft, ChevronRight } from 'lucide-react'
 import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess } from '../utils/taskAccess';
+import { isMissed } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
 import TaskTable from '../components/TaskTable';
@@ -45,7 +46,9 @@ const Inbox = () => {
     cargarDatos();
   }, [cargarDatos]);
 
-  const pendientes = useMemo(() => tasks.filter((t) => !t.completed), [tasks]);
+  // Una vez vencida la fecha, la tarea se va a "Incompletas" — acá solo quedan
+  // las que todavía se pueden hacer a tiempo.
+  const pendientes = useMemo(() => tasks.filter((t) => !t.completed && !isMissed(t)), [tasks]);
 
   // Departamentos que tienen al menos una tarea pendiente, para los accesos rápidos del buscador.
   const departamentosConTareas = useMemo(() => {
@@ -105,6 +108,16 @@ const Inbox = () => {
     }
   };
 
+  const handleApprove = async (task, { qualityLevel, comentario }) => {
+    try {
+      await updateTask(task._id, { ...task, completed: true, qualityLevel, completionComment: comentario });
+      await cargarDatos();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al aprobar la tarea');
+    }
+  };
+
   const handleDelete = async (id) => {
     try {
       await deleteTask(id);
@@ -120,7 +133,7 @@ const Inbox = () => {
       <div className="inbox-header">
         <div>
           <h1>Tareas del equipo</h1>
-          <p className="page-subtitle">Todas las tareas pendientes del equipo, sin importar la fecha.</p>
+          <p className="page-subtitle">Tareas pendientes del equipo, todavía a tiempo.</p>
         </div>
         <div className="inbox-header-actions">
           <button className="btn-ghost" onClick={() => alert('Próximamente: exportar reporte')}>
@@ -163,12 +176,14 @@ const Inbox = () => {
               >
                 Todas
               </button>
-              <button
-                className={`inbox-filter-chip ${filtro === 'mias' ? 'is-active' : ''}`}
-                onClick={() => elegirFiltro('mias')}
-              >
-                Mis tareas
-              </button>
+              {!esEmpresa && (
+                <button
+                  className={`inbox-filter-chip ${filtro === 'mias' ? 'is-active' : ''}`}
+                  onClick={() => elegirFiltro('mias')}
+                >
+                  Mis tareas
+                </button>
+              )}
               {departamentosConTareas.map((dep) => (
                 <button
                   key={dep.id}
@@ -189,7 +204,7 @@ const Inbox = () => {
         <p className="empty-state">No hay tareas que coincidan con el filtro.</p>
       ) : (
         <>
-          <TaskTable tasks={visibles} onToggle={handleToggle} onDelete={handleDelete} />
+          <TaskTable tasks={visibles} onToggle={handleToggle} onApprove={handleApprove} onDelete={handleDelete} />
 
           <div className="inbox-pagination">
             <span>Mostrando {(paginaActual - 1) * PAGE_SIZE + 1}–{Math.min(paginaActual * PAGE_SIZE, filtradas.length)} de {filtradas.length}</span>
