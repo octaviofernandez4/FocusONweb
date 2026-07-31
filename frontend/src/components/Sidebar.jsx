@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, ListChecks, CheckCircle2, BarChart3, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, Inbox, ListChecks, CheckCircle2, XCircle, BarChart3, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import './Sidebar.css';
@@ -9,6 +9,7 @@ const navItems = [
   { to: '/app/mytasks', label: 'Mis tareas', icon: ListChecks },
   { to: '/app/inbox', label: 'Tareas del equipo', icon: Inbox },
   { to: '/app/completed', label: 'Completadas', icon: CheckCircle2 },
+  { to: '/app/incomplete', label: 'Incompletas', icon: XCircle },
   { to: '/app/projects', label: 'Proyectos', icon: FolderKanban },
   { to: '/app/analytics', label: 'Analíticas', icon: BarChart3 },
 ];

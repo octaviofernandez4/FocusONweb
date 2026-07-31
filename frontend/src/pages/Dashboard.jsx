@@ -5,7 +5,7 @@ import { getTasks, getTaskStats, updateTask } from '../services/taskService';
 import { listMembers } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import { isTodayRelevant, isSameLocalDay } from '../utils/dateHelpers';
+import { isSameLocalDay } from '../utils/dateHelpers';
 import { getProjectColor } from '../utils/projectColors';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
@@ -241,12 +241,30 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
 
 // --- Vista Empleado (member) ---
 const EmployeeView = ({ user, tasks, stats, navigate }) => {
-  const misTareasHoy = tasks
-    .filter((t) => !t.completed && isTodayRelevant(t) && String(t.assignedTo?._id || t.assignedTo) === String(user?._id))
-    .sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0));
+  const misTareas = tasks.filter((t) => String(t.assignedTo?._id || t.assignedTo) === String(user?._id));
+  const hoy = new Date();
 
-  const tareasDeHoy = tasks.filter((t) => !t.completed && isTodayRelevant(t));
-  const urgentes = tareasDeHoy.filter((t) => t.priority === 'high').length;
+  // Estrictamente las de hoy (o sin fecha) — las vencidas de días anteriores
+  // ya no se cuelan acá, se reflejan en el contador de "incompletas de la semana".
+  const misTareasHoy = misTareas
+    .filter((t) => !t.completed && (!t.dueDate || isSameLocalDay(t.dueDate, hoy)))
+    .sort((a, b) => new Date(a.dueDate || 0) - new Date(b.dueDate || 0));
+  const urgentes = misTareasHoy.filter((t) => t.priority === 'high').length;
+
+  // Tareas de la semana en curso (lunes a domingo) que siguen sin completarse,
+  // sin importar si ya vencieron o vencen más adelante en la semana.
+  const diaSemana = hoy.getDay();
+  const diasDesdeElLunes = diaSemana === 0 ? 6 : diaSemana - 1;
+  const lunes = new Date(hoy);
+  lunes.setHours(0, 0, 0, 0);
+  lunes.setDate(hoy.getDate() - diasDesdeElLunes);
+  const domingo = new Date(lunes);
+  domingo.setDate(lunes.getDate() + 6);
+  domingo.setHours(23, 59, 59, 999);
+
+  const incompletasSemana = misTareas.filter(
+    (t) => !t.completed && t.dueDate && new Date(t.dueDate) >= lunes && new Date(t.dueDate) <= domingo
+  );
 
   return (
     <div className="dashboard-page">
@@ -263,8 +281,14 @@ const EmployeeView = ({ user, tasks, stats, navigate }) => {
       </div>
 
       <div className="dashboard-stats">
-        <StatCard label="TAREAS PARA HOY" value={tareasDeHoy.length} hint={`Urgentes: ${urgentes}`} tone="neutral" />
+        <StatCard label="TAREAS PARA HOY" value={misTareasHoy.length} hint={`Urgentes: ${urgentes}`} tone="neutral" />
         <StatCard label="COMPLETADAS ESTA SEMANA" value={stats.completedThisWeek} hint="Comparado con hoy." tone="success" />
+        <StatCard
+          label="INCOMPLETAS DE LA SEMANA"
+          value={incompletasSemana.length}
+          hint="Vencidas o pendientes de esta semana."
+          tone="danger"
+        />
         <StatCard label="PROGRESO PERSONAL" value="68%" hint="Meta trimestral — en camino." tone="neutral" />
       </div>
 

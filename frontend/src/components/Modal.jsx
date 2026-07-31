@@ -1,8 +1,13 @@
+import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { X } from 'lucide-react';
 import './Modal.css';
 
-const Modal = ({ isOpen, onClose, title, children, size }) => (
+// Portal a document.body: la página se anima con framer-motion (ver AppShell),
+// y cualquier transform en un ancestro crea un containing block nuevo para los
+// hijos position:fixed — sin el portal, el overlay quedaría recortado dentro
+// del contenido de la página en vez de cubrir toda la pantalla.
+const Modal = ({ isOpen, onClose, title, children, size }) => createPortal(
   <AnimatePresence>
     {isOpen && (
       <motion.div
@@ -31,7 +36,8 @@ const Modal = ({ isOpen, onClose, title, children, size }) => (
         </motion.div>
       </motion.div>
     )}
-  </AnimatePresence>
+  </AnimatePresence>,
+  document.body
 );
 
 export default Modal;
