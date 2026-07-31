@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Search, Plus, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess } from '../utils/taskAccess';
+import { isMissed } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
 import TaskTable from '../components/TaskTable';
@@ -12,17 +13,21 @@ const PAGE_SIZE = 8;
 
 // "Tareas del equipo" — vista de tabla compartida por ambas cuentas. Las acciones
 // de cada fila (check/borrar) respetan las mismas reglas que TaskCard (ver utils/taskAccess).
+// El buscador filtra por título de tarea o por nombre de proyecto, y al hacer clic
+// despliega accesos rápidos: "Mis tareas" y los departamentos que tienen tareas.
 const Inbox = () => {
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
+  const searchWrapRef = useRef(null);
 
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [busqueda, setBusqueda] = useState('');
-  const [filtro, setFiltro] = useState('todas');
   const [pagina, setPagina] = useState(1);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [filtro, setFiltro] = useState('todas'); // 'todas' | 'mias' | id de proyecto
+  const [dropdownAbierto, setDropdownAbierto] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     try {
@@ -41,17 +46,32 @@ const Inbox = () => {
     cargarDatos();
   }, [cargarDatos]);
 
-  const pendientes = useMemo(() => tasks.filter((t) => !t.completed), [tasks]);
+  // Una vez vencida la fecha, la tarea se va a "Incompletas" — acá solo quedan
+  // las que todavía se pueden hacer a tiempo.
+  const pendientes = useMemo(() => tasks.filter((t) => !t.completed && !isMissed(t)), [tasks]);
+
+  // Departamentos que tienen al menos una tarea pendiente, para los accesos rápidos del buscador.
+  const departamentosConTareas = useMemo(() => {
+    const vistos = new Map();
+    pendientes.forEach((t) => {
+      if (t.project?._id && !vistos.has(t.project._id)) vistos.set(t.project._id, t.project.name);
+    });
+    return Array.from(vistos, ([id, name]) => ({ id, name }));
+  }, [pendientes]);
 
   const filtradas = useMemo(() => {
+    let base = pendientes;
+    if (filtro === 'mias') {
+      base = base.filter((t) => String(t.assignedTo?._id || t.assignedTo) === String(user?._id));
+    } else if (filtro !== 'todas') {
+      base = base.filter((t) => (t.project?._id || t.project) === filtro);
+    }
+
     const texto = busqueda.trim().toLowerCase();
-    return pendientes
-      .filter((t) => !texto || t.title.toLowerCase().includes(texto))
-      .filter((t) => {
-        if (filtro === 'mias') return String(t.assignedTo?._id || t.assignedTo) === String(user?._id);
-        if (filtro === 'alta') return t.priority === 'high';
-        return true;
-      });
+    if (!texto) return base;
+    return base.filter((t) =>
+      t.title.toLowerCase().includes(texto) || (t.project?.name || '').toLowerCase().includes(texto)
+    );
   }, [pendientes, busqueda, filtro, user]);
 
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
@@ -59,7 +79,20 @@ const Inbox = () => {
   const visibles = filtradas.slice((paginaActual - 1) * PAGE_SIZE, paginaActual * PAGE_SIZE);
 
   const cambiarBusqueda = (valor) => { setBusqueda(valor); setPagina(1); };
-  const cambiarFiltro = (valor) => { setFiltro(valor); setPagina(1); };
+
+  const elegirFiltro = (valor) => {
+    setFiltro(valor);
+    setPagina(1);
+    setDropdownAbierto(false);
+  };
+
+  useEffect(() => {
+    const cerrarSiEsAfuera = (e) => {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target)) setDropdownAbierto(false);
+    };
+    document.addEventListener('mousedown', cerrarSiEsAfuera);
+    return () => document.removeEventListener('mousedown', cerrarSiEsAfuera);
+  }, []);
 
   const handleToggle = async (task) => {
     const { esEmpresa: puedeConfirmar } = getTaskAccess(task, user);
@@ -72,6 +105,16 @@ const Inbox = () => {
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.mensaje || 'Hubo un error al actualizar la tarea');
+    }
+  };
+
+  const handleApprove = async (task, { qualityLevel, comentario }) => {
+    try {
+      await updateTask(task._id, { ...task, completed: true, qualityLevel, completionComment: comentario });
+      await cargarDatos();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al aprobar la tarea');
     }
   };
 
@@ -90,7 +133,7 @@ const Inbox = () => {
       <div className="inbox-header">
         <div>
           <h1>Tareas del equipo</h1>
-          <p className="page-subtitle">Todas las tareas pendientes del equipo, sin importar la fecha.</p>
+          <p className="page-subtitle">Tareas pendientes del equipo, todavía a tiempo.</p>
         </div>
         <div className="inbox-header-actions">
           <button className="btn-ghost" onClick={() => alert('Próximamente: exportar reporte')}>
@@ -113,19 +156,45 @@ const Inbox = () => {
       )}
 
       <div className="inbox-toolbar">
-        <div className="inbox-search">
-          <Search size={16} />
-          <input
-            type="text"
-            placeholder="Filtrar tareas…"
-            value={busqueda}
-            onChange={(e) => cambiarBusqueda(e.target.value)}
-          />
-        </div>
-        <div className="inbox-filter-chips">
-          <button className={`inbox-filter-chip ${filtro === 'todas' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('todas')}>Todas</button>
-          <button className={`inbox-filter-chip ${filtro === 'mias' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('mias')}>Mis tareas</button>
-          <button className={`inbox-filter-chip ${filtro === 'alta' ? 'is-active' : ''}`} onClick={() => cambiarFiltro('alta')}>Alta prioridad</button>
+        <div className="inbox-search-wrap" ref={searchWrapRef}>
+          <div className="inbox-search">
+            <Search size={16} />
+            <input
+              type="text"
+              placeholder="Filtrar tareas… (por título o proyecto)"
+              value={busqueda}
+              onFocus={() => setDropdownAbierto(true)}
+              onChange={(e) => cambiarBusqueda(e.target.value)}
+            />
+          </div>
+
+          {dropdownAbierto && (
+            <div className="inbox-search-dropdown card-panel">
+              <button
+                className={`inbox-filter-chip ${filtro === 'todas' ? 'is-active' : ''}`}
+                onClick={() => elegirFiltro('todas')}
+              >
+                Todas
+              </button>
+              {!esEmpresa && (
+                <button
+                  className={`inbox-filter-chip ${filtro === 'mias' ? 'is-active' : ''}`}
+                  onClick={() => elegirFiltro('mias')}
+                >
+                  Mis tareas
+                </button>
+              )}
+              {departamentosConTareas.map((dep) => (
+                <button
+                  key={dep.id}
+                  className={`inbox-filter-chip ${filtro === dep.id ? 'is-active' : ''}`}
+                  onClick={() => elegirFiltro(dep.id)}
+                >
+                  {dep.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -135,7 +204,7 @@ const Inbox = () => {
         <p className="empty-state">No hay tareas que coincidan con el filtro.</p>
       ) : (
         <>
-          <TaskTable tasks={visibles} onToggle={handleToggle} onDelete={handleDelete} />
+          <TaskTable tasks={visibles} onToggle={handleToggle} onApprove={handleApprove} onDelete={handleDelete} />
 
           <div className="inbox-pagination">
             <span>Mostrando {(paginaActual - 1) * PAGE_SIZE + 1}–{Math.min(paginaActual * PAGE_SIZE, filtradas.length)} de {filtradas.length}</span>

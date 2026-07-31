@@ -1,0 +1,135 @@
+.approve-modal-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  margin: -0.8rem 0 1.4rem;
+}
+
+.approve-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+}
+
+.approve-modal-task-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.approve-modal-assignee {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  min-width: 0;
+}
+
+.approve-modal-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: var(--gradient-brand);
+  color: white;
+}
+
+.approve-modal-project {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.approve-modal-task-label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.approve-modal-task-value {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.88rem;
+}
+
+.approve-modal-levels {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.approve-modal-level {
+  flex: 1;
+  padding: 0.65rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(15, 23, 42, 0.5);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.approve-modal-level:hover {
+  border-color: var(--color-electric-light);
+  color: var(--text-primary);
+}
+
+.approve-modal-level.is-active {
+  background: var(--gradient-brand);
+  color: white;
+  border-color: transparent;
+}
+
+.approve-modal-textarea {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.8rem 1rem;
+  border-radius: 10px;
+  color: white;
+  outline: none;
+  font-family: inherit;
+  font-size: 0.92rem;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+.approve-modal-textarea:focus {
+  border-color: var(--color-electric-light);
+  box-shadow: 0 0 10px var(--color-electric-glow);
+  background: rgba(15, 23, 42, 0.8);
+}
+
+.approve-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.8rem;
+  margin-top: 0.2rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.approve-modal-actions .btn-ghost {
+  width: auto;
+  padding: 0.7rem 1.3rem;
+  font-size: 0.9rem;
+}
+
+.approve-modal-submit {
+  width: auto;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.5rem;
+  font-size: 0.9rem;
+}

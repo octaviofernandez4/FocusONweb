@@ -1,8 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, ListChecks, CheckCircle2, BarChart3, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, Inbox, ListChecks, CheckCircle2, XCircle, BarChart3, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import { getProjectColor } from '../utils/projectColors';
 import './Sidebar.css';
 
 const navItems = [
@@ -10,13 +9,14 @@ const navItems = [
   { to: '/app/mytasks', label: 'Mis tareas', icon: ListChecks },
   { to: '/app/inbox', label: 'Tareas del equipo', icon: Inbox },
   { to: '/app/completed', label: 'Completadas', icon: CheckCircle2 },
+  { to: '/app/incomplete', label: 'Incompletas', icon: XCircle },
   { to: '/app/projects', label: 'Proyectos', icon: FolderKanban },
   { to: '/app/analytics', label: 'Analíticas', icon: BarChart3 },
 ];
 
 const Sidebar = () => {
   const { logout } = useAuth();
-  const { org, projects } = useOrg();
+  const { org } = useOrg();
   const navigate = useNavigate();
 
   const cerrarSesion = () => {
@@ -31,7 +31,7 @@ const Sidebar = () => {
           <img src={org.logoUrl} alt="Logo de la empresa" className="sidebar-company-logo" />
         ) : (
           <div className="sidebar-company-logo sidebar-company-logo-placeholder">
-            <Building2 size={18} />
+            <Building2 size={44} />
           </div>
         )}
         <p className="sidebar-company-name">{org?.name || 'Tu empresa'}</p>
@@ -49,21 +49,6 @@ const Sidebar = () => {
           </NavLink>
         ))}
       </nav>
-
-      {projects.length > 0 && (
-        <div className="sidebar-projects">
-          <p className="sidebar-section-title">Proyectos</p>
-          {projects.map((project) => {
-            const color = getProjectColor(project.color);
-            return (
-              <NavLink key={project._id} to={`/app/projects?id=${project._id}`} className="sidebar-project-item">
-                <span className="sidebar-project-dot" style={{ background: color.dot }} />
-                {project.name}
-              </NavLink>
-            );
-          })}
-        </div>
-      )}
 
       <div className="sidebar-footer">
         <NavLink to="/app/settings" className={({ isActive }) => `sidebar-footer-link ${isActive ? 'is-active' : ''}`}>

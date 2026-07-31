@@ -4,25 +4,29 @@
   justify-content: flex-end;
   gap: 1rem;
   padding: 0.9rem 0 1.6rem;
-  border-bottom: 1px solid var(--border-subtle);
   margin-bottom: 1.8rem;
 }
 
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 0.7rem;
+  gap: 1rem;
+}
+
+.topbar-actions .icon-btn {
+  width: 46px;
+  height: 46px;
 }
 
 .topbar-avatar {
-  width: 36px;
-  height: 36px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 1.05rem;
   background: var(--gradient-brand);
   color: white;
   border: none;

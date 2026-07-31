@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check } from 'lucide-react';
+import { Check, CheckCircle2, Lock } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import { isTodayRelevant } from '../utils/dateHelpers';
+import Modal from '../components/Modal';
+import AlertModal from '../components/AlertModal';
 import './MyTasks.css';
 
 const formatFechaHora = (dueDate) => {
@@ -20,7 +21,9 @@ const MyTasks = () => {
   const navigate = useNavigate();
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [vista, setVista] = useState('hoy');
+  const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
+  const [tareaAConfirmar, setTareaAConfirmar] = useState(null);
+  const [accionRestringida, setAccionRestringida] = useState(false);
 
   const cargarTareas = useCallback(async () => {
     try {
@@ -43,16 +46,33 @@ const MyTasks = () => {
     [tasks, user]
   );
 
-  const activas = misTareas.filter((t) => !t.completed);
-  const completadas = misTareas.filter((t) => t.completed);
-  const visibles = vista === 'hoy' ? activas.filter(isTodayRelevant) : activas.filter((t) => !isTodayRelevant(t));
+  // Departamentos (proyectos) donde tengo tareas asignadas, con mi propio progreso.
+  const proyectosConProgreso = useMemo(() => {
+    return projects
+      .map((project) => {
+        const tareasDelProyecto = misTareas.filter((t) => (t.project?._id || t.project) === project._id);
+        const completadasProyecto = tareasDelProyecto.filter((t) => t.completed).length;
+        const progreso = tareasDelProyecto.length === 0 ? 0 : Math.round((completadasProyecto / tareasDelProyecto.length) * 100);
+        return { ...project, progreso, total: tareasDelProyecto.length };
+      })
+      .filter((project) => project.total > 0);
+  }, [projects, misTareas]);
 
-  const proyectosConProgreso = projects.map((project) => {
-    const tareasDelProyecto = tasks.filter((t) => (t.project?._id || t.project) === project._id);
-    const completadasProyecto = tareasDelProyecto.filter((t) => t.completed).length;
-    const progreso = tareasDelProyecto.length === 0 ? 0 : Math.round((completadasProyecto / tareasDelProyecto.length) * 100);
-    return { ...project, progreso };
-  });
+  const misTareasDelProyecto = proyectoSeleccionado
+    ? misTareas.filter((t) => (t.project?._id || t.project) === proyectoSeleccionado._id)
+    : misTareas;
+
+  // Una vez vencida la fecha, la tarea pasa a "perdida" y se ve en Completadas,
+  // no tiene sentido que siga colgada acá como si todavía se pudiera hacer a tiempo.
+  const ahora = new Date();
+  const activas = misTareasDelProyecto.filter(
+    (t) => !t.completed && !(t.dueDate && new Date(t.dueDate) < ahora)
+  );
+  const tituloBox = proyectoSeleccionado ? proyectoSeleccionado.name : 'Mis tareas';
+
+  const seleccionarProyecto = (project) => {
+    setProyectoSeleccionado((actual) => (actual?._id === project._id ? null : project));
+  };
 
   const handleToggle = async (task) => {
     try {
@@ -64,32 +84,55 @@ const MyTasks = () => {
     }
   };
 
+  // Marcar como lista pide confirmación (dispara la revisión de la empresa). Una vez
+  // enviada, ya no se puede destildar desde acá — eso ahora depende solo de la empresa
+  // (confirmándola o reabriéndola), así nadie retira un envío a mitad de revisión.
+  const handleCheckboxClick = (task) => {
+    if (task.pendingReview) {
+      setAccionRestringida(true);
+    } else {
+      setTareaAConfirmar(task);
+    }
+  };
+
+  const confirmarRealizacion = async () => {
+    if (!tareaAConfirmar) return;
+    await handleToggle(tareaAConfirmar);
+    setTareaAConfirmar(null);
+  };
+
   const abrirTarea = (task) => navigate(`/app/tasks/${task._id}`, { state: { task } });
 
   return (
     <div className="mytasks-page">
       <h1>Mis tareas</h1>
-      <p className="page-subtitle">Las tareas que tenés asignadas, agrupadas por fecha.</p>
+      <p className="page-subtitle">Todas las tareas que tenés asignadas.</p>
 
       <div className="mytasks-body">
         <div className="mytasks-main card-panel">
-          <div className="mytasks-tabs">
-            <button className={`mytasks-tab ${vista === 'hoy' ? 'is-active' : ''}`} onClick={() => setVista('hoy')}>Hoy</button>
-            <button className={`mytasks-tab ${vista === 'proximas' ? 'is-active' : ''}`} onClick={() => setVista('proximas')}>Próximas</button>
+          <div className="mytasks-main-header">
+            <h2>{tituloBox}</h2>
+            {proyectoSeleccionado && (
+              <button className="mytasks-clear-filter" onClick={() => setProyectoSeleccionado(null)}>
+                Ver todas
+              </button>
+            )}
           </div>
 
           {isLoading ? (
             <p className="empty-state">Cargando tareas…</p>
-          ) : visibles.length === 0 ? (
-            <p className="empty-state">No tenés tareas {vista === 'hoy' ? 'para hoy' : 'próximas'}.</p>
+          ) : activas.length === 0 ? (
+            <p className="empty-state">
+              {proyectoSeleccionado ? `No tenés tareas asignadas en ${proyectoSeleccionado.name}.` : 'No tenés tareas asignadas.'}
+            </p>
           ) : (
             <ul className="mytasks-list">
-              {visibles.map((task) => (
+              {activas.map((task) => (
                 <li key={task._id} className="mytasks-item is-clickable" onClick={() => abrirTarea(task)}>
                   <button
                     className={`mytasks-checkbox ${task.pendingReview ? 'is-checked' : ''}`}
                     title={task.pendingReview ? 'Deshacer' : 'Marcar como lista'}
-                    onClick={(e) => { e.stopPropagation(); handleToggle(task); }}
+                    onClick={(e) => { e.stopPropagation(); handleCheckboxClick(task); }}
                   >
                     {task.pendingReview && <Check size={13} />}
                   </button>
@@ -109,32 +152,20 @@ const MyTasks = () => {
               ))}
             </ul>
           )}
-
-          {completadas.length > 0 && (
-            <div className="mytasks-completed">
-              <p className="mytasks-completed-title">Completadas ({completadas.length})</p>
-              <ul className="mytasks-list">
-                {completadas.slice(0, 5).map((task) => (
-                  <li key={task._id} className="mytasks-item is-done is-clickable" onClick={() => abrirTarea(task)}>
-                    <span className="mytasks-checkbox is-checked is-locked"><Check size={13} /></span>
-                    <div className="mytasks-item-body">
-                      <p className="mytasks-item-title is-done">{task.title}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </div>
 
         <div className="mytasks-side card-panel">
           <h2>Proyectos activos</h2>
           {proyectosConProgreso.length === 0 ? (
-            <p className="empty-state">Todavía no hay proyectos.</p>
+            <p className="empty-state">Todavía no tenés tareas en ningún proyecto.</p>
           ) : (
             <ul className="mytasks-project-list">
               {proyectosConProgreso.map((project) => (
-                <li key={project._id}>
+                <li
+                  key={project._id}
+                  className={`mytasks-project-item is-clickable ${proyectoSeleccionado?._id === project._id ? 'is-active' : ''}`}
+                  onClick={() => seleccionarProyecto(project)}
+                >
                   <div className="mytasks-project-row">
                     <span>{project.name}</span>
                     <span>{project.progreso}%</span>
@@ -148,6 +179,30 @@ const MyTasks = () => {
           )}
         </div>
       </div>
+
+      <Modal isOpen={!!tareaAConfirmar} onClose={() => setTareaAConfirmar(null)} title="Confirmar tarea">
+        <div className="confirm-task">
+          <div className="confirm-task-icon"><CheckCircle2 size={26} /></div>
+          <h3>¿Confirmar realización de la tarea?</h3>
+          <p>
+            {tareaAConfirmar && `"${tareaAConfirmar.title}"`} se va a marcar como lista para revisión y tu
+            supervisor va a recibir la notificación.
+          </p>
+          <div className="confirm-task-actions">
+            <button className="btn-ghost" onClick={() => setTareaAConfirmar(null)}>Cancelar</button>
+            <button className="btn-primary" onClick={confirmarRealizacion}>Sí, confirmar</button>
+          </div>
+        </div>
+      </Modal>
+
+      <AlertModal
+        isOpen={accionRestringida}
+        onClose={() => setAccionRestringida(false)}
+        icon={Lock}
+        title="Acción restringida"
+      >
+        <p>Solo una cuenta de empresa puede confirmar o reabrir una tarea.</p>
+      </AlertModal>
     </div>
   );
 };

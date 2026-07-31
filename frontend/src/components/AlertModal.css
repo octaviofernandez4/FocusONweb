@@ -1,0 +1,41 @@
+.alert-modal {
+  text-align: center;
+}
+
+.alert-modal-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.alert-modal h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.7rem;
+}
+
+.alert-modal-message {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.alert-modal-message p + p {
+  margin-top: 0.6rem;
+}
+
+.alert-modal-message .alert-modal-error {
+  font-weight: 600;
+  color: var(--color-danger);
+}
+
+.alert-modal-btn {
+  width: 100%;
+  margin-top: 1.6rem;
+  letter-spacing: 0.03em;
+}

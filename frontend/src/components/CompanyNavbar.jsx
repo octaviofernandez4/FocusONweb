@@ -1,55 +1,32 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, CheckCircle2, FolderKanban, BarChart3, Settings, LogOut, Building2, Pencil } from 'lucide-react';
+import { LayoutDashboard, Inbox, CheckCircle2, XCircle, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import { updateOrg } from '../services/orgService';
-import { uploadFile } from '../services/uploadService';
 import NotificationsPanel from './NotificationsPanel';
+import Modal from './Modal';
 import './CompanyNavbar.css';
 
 const navItems = [
   { to: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/app/inbox', label: 'Tareas del equipo', icon: Inbox },
   { to: '/app/completed', label: 'Completadas', icon: CheckCircle2 },
+  { to: '/app/incomplete', label: 'Incompletas', icon: XCircle },
   { to: '/app/projects', label: 'Proyectos', icon: FolderKanban },
-  { to: '/app/analytics', label: 'Analíticas', icon: BarChart3 },
   { to: '/app/settings', label: 'Configuración', icon: Settings },
 ];
-
-const getInitials = (name, lastname) =>
-  `${name?.[0] || ''}${lastname?.[0] || ''}`.toUpperCase() || '?';
 
 // Navbar horizontal completo de la cuenta empresa — sin sidebar, a propósito
 // bien distinto del layout de la cuenta empleado.
 const CompanyNavbar = () => {
-  const { user, logout } = useAuth();
-  const { org, refreshOrg } = useOrg();
+  const { logout } = useAuth();
+  const { org } = useOrg();
   const navigate = useNavigate();
-  const logoInputRef = useRef(null);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [confirmandoSalida, setConfirmandoSalida] = useState(false);
 
   const cerrarSesion = () => {
     logout();
     navigate('/login');
-  };
-
-  const handleLogoChange = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
-    if (!file) return;
-
-    setIsUploadingLogo(true);
-    try {
-      const subido = await uploadFile(file);
-      await updateOrg({ name: org?.name, logoUrl: subido.url });
-      await refreshOrg();
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.mensaje || 'Hubo un error al subir el logo');
-    } finally {
-      setIsUploadingLogo(false);
-    }
   };
 
   return (
@@ -60,50 +37,47 @@ const CompanyNavbar = () => {
             <img src={org.logoUrl} alt="Logo de la empresa" className="company-navbar-logo" />
           ) : (
             <div className="company-navbar-logo company-navbar-logo-placeholder">
-              <Building2 size={18} />
+              <Building2 size={30} />
             </div>
           )}
-          <button
-            type="button"
-            className="company-navbar-logo-edit"
-            title="Cambiar logo"
-            onClick={() => logoInputRef.current?.click()}
-            disabled={isUploadingLogo}
-          >
-            <Pencil size={11} />
-          </button>
-          <input
-            ref={logoInputRef}
-            type="file"
-            accept=".png,.jpg,.jpeg"
-            hidden
-            onChange={handleLogoChange}
-          />
         </div>
 
-        <span className="company-navbar-org">{org?.name || 'Tu empresa'}</span>
+        <nav className="company-navbar-links">
+          {navItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              key={to}
+              to={to}
+              className={({ isActive }) => `company-navbar-link ${isActive ? 'is-active' : ''}`}
+            >
+              <Icon size={18} />
+              <span>{label}</span>
+            </NavLink>
+          ))}
+        </nav>
 
         <div className="company-navbar-actions">
           <NotificationsPanel />
-          <div className="company-navbar-avatar">{getInitials(user?.name, user?.lastname)}</div>
-          <button className="icon-btn" title="Salir" onClick={cerrarSesion}>
+          <button
+            className="icon-btn icon-btn-danger"
+            title="Salir"
+            onClick={() => setConfirmandoSalida(true)}
+          >
             <LogOut size={19} />
           </button>
         </div>
       </div>
 
-      <nav className="company-navbar-links">
-        {navItems.map(({ to, label, icon: Icon }) => (
-          <NavLink
-            key={to}
-            to={to}
-            className={({ isActive }) => `company-navbar-link ${isActive ? 'is-active' : ''}`}
-          >
-            <Icon size={18} />
-            <span>{label}</span>
-          </NavLink>
-        ))}
-      </nav>
+      <Modal isOpen={confirmandoSalida} onClose={() => setConfirmandoSalida(false)} title="Cerrar sesión">
+        <div className="confirm-logout">
+          <div className="confirm-logout-icon"><LogOut size={24} /></div>
+          <h3>¿Cerrar sesión?</h3>
+          <p>Vas a salir de tu cuenta en {org?.name || 'tu empresa'}. Podés volver a iniciar sesión cuando quieras.</p>
+          <div className="confirm-logout-actions">
+            <button className="btn-ghost" onClick={() => setConfirmandoSalida(false)}>Cancelar</button>
+            <button className="btn-danger" onClick={cerrarSesion}>Sí, cerrar sesión</button>
+          </div>
+        </div>
+      </Modal>
     </header>
   );
 };

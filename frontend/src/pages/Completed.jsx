@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import { getTasks, getTaskStats, restoreAllTasks, clearAllCompletedTasks } from '../services/taskService';
+import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { isSameLocalDay } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
-import CompletedTaskRow from '../components/CompletedTaskRow';
+import TaskHistoryRow from '../components/TaskHistoryRow';
 import './Completed.css';
 
 const groupLabel = (fecha) => {
@@ -20,37 +21,37 @@ const groupLabel = (fecha) => {
 const Completed = () => {
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const { isAdmin } = useOrg();
+  const { user } = useAuth();
+  const esEmpresa = user?.accountType === 'empresa';
 
   const cargarDatos = useCallback(async () => {
     try {
-      const [tareas, estadisticas] = await Promise.all([getTasks(), getTaskStats()]);
+      const opciones = esEmpresa ? {} : { mine: true };
+      const [tareas, estadisticas] = await Promise.all([getTasks(opciones), getTaskStats(opciones)]);
       setTasks(tareas);
       setStats(estadisticas);
     } catch (error) {
       console.error('Error al cargar completadas:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  }, [esEmpresa]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     cargarDatos();
   }, [cargarDatos]);
 
-  const ahora = new Date();
-  const relevantes = tasks
-    .filter((t) => t.completed || (t.dueDate && new Date(t.dueDate) < ahora))
-    .map((t) => ({
-      task: t,
-      isMissed: !t.completed,
-      fechaOrden: t.completed ? t.completedAt : t.dueDate,
-    }))
-    .sort((a, b) => new Date(b.fechaOrden) - new Date(a.fechaOrden));
+  const completadas = tasks
+    .filter((t) => t.completed)
+    .sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
 
-  const grupos = relevantes.reduce((acc, item) => {
-    const label = groupLabel(item.fechaOrden);
+  const grupos = completadas.reduce((acc, task) => {
+    const label = groupLabel(task.completedAt);
     if (!acc[label]) acc[label] = [];
-    acc[label].push(item);
+    acc[label].push(task);
     return acc;
   }, {});
 
@@ -80,7 +81,7 @@ const Completed = () => {
       <div className="completed-header">
         <div>
           <h1>Completadas</h1>
-          <p className="page-subtitle">Revisá tus tareas terminadas y perdidas.</p>
+          <p className="page-subtitle">Revisá tus tareas terminadas.</p>
         </div>
         <div className="completed-header-actions">
           <button className="btn-ghost" onClick={handleRestoreAll}>
@@ -98,18 +99,19 @@ const Completed = () => {
         <div className="completed-stats">
           <StatCard label="TOTAL COMPLETADAS" value={stats.totalCompleted} hint={`+${stats.completedThisWeek} esta semana`} tone="neutral" />
           <StatCard label="TASA DE CUMPLIMIENTO" value={`${stats.completionRate}%`} hint="Buen trabajo manteniendo el foco." tone="success" />
-          <StatCard label="PERDIDAS" value={stats.missedCount} hint="Requieren atención o reprogramación." tone="danger" />
         </div>
       )}
 
-      {relevantes.length === 0 ? (
-        <p className="empty-state">Todavía no hay tareas completadas o perdidas.</p>
+      {isLoading ? (
+        <p className="empty-state">Cargando tareas completadas…</p>
+      ) : completadas.length === 0 ? (
+        <p className="empty-state">Todavía no hay tareas completadas.</p>
       ) : (
         Object.entries(grupos).map(([label, items]) => (
           <div key={label} className="completed-group">
             <h2>{label}</h2>
-            {items.map(({ task, isMissed }) => (
-              <CompletedTaskRow key={task._id} task={task} isMissed={isMissed} />
+            {items.map((task) => (
+              <TaskHistoryRow key={task._id} task={task} />
             ))}
           </div>
         ))

@@ -1,0 +1,46 @@
+.task-created-modal {
+  text-align: center;
+}
+
+.task-created-modal-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-brand);
+  color: white;
+}
+
+.task-created-modal h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+.task-created-modal p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.task-created-modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1.7rem;
+}
+
+.task-created-modal-actions .btn-ghost {
+  width: auto;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.88rem;
+}
+
+.task-created-modal-btn {
+  width: auto;
+  margin-top: 0;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.88rem;
+}

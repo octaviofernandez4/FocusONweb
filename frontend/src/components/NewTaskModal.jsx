@@ -1,13 +1,16 @@
 import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
+import { Mail, UploadCloud, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
 import { createTask } from '../services/taskService';
 import { uploadFile } from '../services/uploadService';
 import { taskAssignSchema } from '../schemas/taskAssignSchema';
 import { useOrg } from '../hooks/useOrg';
 import { formatTamanio } from '../utils/fileSize';
+import { esFechaPasada } from '../utils/dateHelpers';
 import Modal from './Modal';
+import AlertModal from './AlertModal';
+import TaskCreatedModal from './TaskCreatedModal';
 import './NewTaskModal.css';
 
 const TIPOS_PERMITIDOS = ['image/png', 'image/jpeg', 'application/pdf'];
@@ -23,6 +26,8 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [fechaInvalida, setFechaInvalida] = useState(false);
+  const [tareaCreada, setTareaCreada] = useState(null);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(taskAssignSchema)
@@ -77,25 +82,38 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
   const quitarAdjunto = (url) => setAttachments((prev) => prev.filter((a) => a.url !== url));
 
   const onSubmit = async (data) => {
+    if (esFechaPasada(data.dueDate)) {
+      setFechaInvalida(true);
+      return;
+    }
     try {
-      await createTask({
+      const { tarea } = await createTask({
         title: data.title,
         description: data.description || undefined,
         priority: data.priority || undefined,
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+        // "2026-07-30" a secas se interpreta como medianoche UTC — en Argentina (UTC-3)
+        // eso cae en "29/7 21:00" local, o sea "ayer". Le sumamos la hora para que la
+        // fecha se arme en horario local y una tarea para hoy quede para hoy.
+        dueDate: data.dueDate ? new Date(`${data.dueDate}T23:59:59`).toISOString() : undefined,
         assignedToEmail: data.assignedToEmail,
         project: data.project || undefined,
         attachments
       });
       await onCreated();
       onClose();
+      setTareaCreada(tarea);
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.mensaje || 'Hubo un error al asignar la tarea');
     }
   };
 
+  const nombreAsignado = tareaCreada?.assignedTo?.name
+    ? `${tareaCreada.assignedTo.name} ${tareaCreada.assignedTo.lastname || ''}`.trim()
+    : null;
+
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} title="Asignar Nueva Tarea" size="lg">
       <p className="new-task-modal-subtitle">Configurá los detalles de la tarea para tu equipo.</p>
 
@@ -194,6 +212,24 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
         </div>
       </form>
     </Modal>
+
+    <AlertModal
+      isOpen={fechaInvalida}
+      onClose={() => setFechaInvalida(false)}
+      icon={AlertTriangle}
+      title="Fecha inválida"
+      buttonLabel="CORREGIR FECHA"
+    >
+      <p className="alert-modal-error">Error: no podés seleccionar una fecha que ya pasó.</p>
+      <p>Para mantener la integridad del proyecto y asegurar un seguimiento preciso, los plazos de las tareas deben establecerse en fechas futuras.</p>
+    </AlertModal>
+
+    <TaskCreatedModal
+      isOpen={!!tareaCreada}
+      onClose={() => setTareaCreada(null)}
+      assigneeName={nombreAsignado}
+    />
+    </>
   );
 };
 

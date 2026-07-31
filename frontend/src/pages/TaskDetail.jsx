@@ -5,6 +5,8 @@ import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess, ESTADO_LABEL, PRIORIDAD_LABEL } from '../utils/taskAccess';
 import { formatTamanio } from '../utils/fileSize';
+import ReopenTaskModal from '../components/ReopenTaskModal';
+import ApproveTaskModal from '../components/ApproveTaskModal';
 import './TaskDetail.css';
 
 const formatFechaHora = (fecha) => {
@@ -29,6 +31,8 @@ const TaskDetail = () => {
 
   const [task, setTask] = useState(location.state?.task || null);
   const [isLoading, setIsLoading] = useState(!location.state?.task);
+  const [modalReabrirAbierto, setModalReabrirAbierto] = useState(false);
+  const [modalAprobarAbierto, setModalAprobarAbierto] = useState(false);
 
   const cargar = useCallback(async () => {
     try {
@@ -41,28 +45,65 @@ const TaskDetail = () => {
     }
   }, [id]);
 
+  // Ojo: React Router no remonta el componente al navegar de una tarea a otra
+  // (misma ruta, distinto :id) — hay que resincronizar "a mano" cada vez que
+  // cambia el id, si no la tarea vieja queda pegada en el estado.
   useEffect(() => {
-    if (!location.state?.task) {
+    if (location.state?.task && location.state.task._id === id) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTask(location.state.task);
+      setIsLoading(false);
+    } else {
+      setIsLoading(true);
       cargar();
     }
-  }, [cargar, location.state]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   if (isLoading) return <p className="empty-state">Cargando tarea…</p>;
   if (!task) return <p className="empty-state">No se encontró esa tarea.</p>;
 
-  const { estado, esEmpresa, puedeTocarCheck, tituloBoton } = getTaskAccess(task, user);
+  const { estado, esEmpresa, esAsignatario, puedeTocarCheck, esReapertura, tituloBoton } = getTaskAccess(task, user);
 
-  const handleAccion = async () => {
+  // El botón solo lo ve la empresa (ver más abajo), así que acá solo hace
+  // falta decidir cuál de los dos modales abrir: reabrir o aprobar.
+  const handleAccion = () => {
+    if (esReapertura) {
+      setModalReabrirAbierto(true);
+    } else {
+      setModalAprobarAbierto(true);
+    }
+  };
+
+  const handleReopenSubmit = async ({ nuevaFecha }) => {
     try {
-      const payload = esEmpresa
-        ? { ...task, completed: !task.completed }
-        : { ...task, pendingReview: !task.pendingReview };
-      const { tarea } = await updateTask(task._id, payload);
+      const { tarea } = await updateTask(task._id, {
+        ...task,
+        completed: false,
+        pendingReview: false,
+        dueDate: nuevaFecha,
+      });
       setTask(tarea);
+      setModalReabrirAbierto(false);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.mensaje || 'Hubo un error al actualizar la tarea');
+      alert(error.response?.data?.mensaje || 'Hubo un error al reabrir la tarea');
+    }
+  };
+
+  const handleApproveSubmit = async ({ qualityLevel, comentario }) => {
+    try {
+      const { tarea } = await updateTask(task._id, {
+        ...task,
+        completed: true,
+        qualityLevel,
+        completionComment: comentario,
+      });
+      setTask(tarea);
+      setModalAprobarAbierto(false);
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al aprobar la tarea');
     }
   };
 
@@ -156,9 +197,13 @@ const TaskDetail = () => {
             )}
           </div>
 
-          {puedeTocarCheck && (
+          {(esEmpresa || esAsignatario) && (
             <div className="taskdetail-actions card-panel">
-              <button className="btn-primary" onClick={handleAccion}>{tituloBoton}</button>
+              {/* "Marcar como lista"/"Deshacer" solo vive en Mis tareas (con su confirmación);
+                  acá el empleado solo puede ver el detalle y pedir aclaración. */}
+              {esEmpresa && puedeTocarCheck && (
+                <button className="btn-primary" onClick={handleAccion}>{tituloBoton}</button>
+              )}
               <button className="btn-ghost" onClick={() => alert('Próximamente: solicitar aclaración')}>
                 <Paperclip size={15} /> Solicitar aclaración
               </button>
@@ -166,6 +211,20 @@ const TaskDetail = () => {
           )}
         </div>
       </div>
+
+      <ReopenTaskModal
+        isOpen={modalReabrirAbierto}
+        onClose={() => setModalReabrirAbierto(false)}
+        task={task}
+        onSubmit={handleReopenSubmit}
+      />
+
+      <ApproveTaskModal
+        isOpen={modalAprobarAbierto}
+        onClose={() => setModalAprobarAbierto(false)}
+        task={task}
+        onSubmit={handleApproveSubmit}
+      />
     </div>
   );
 };

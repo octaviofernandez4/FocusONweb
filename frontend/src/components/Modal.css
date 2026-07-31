@@ -9,12 +9,10 @@
   z-index: 100;
   padding: 3rem 1.5rem;
   overflow-y: auto;
-  animation: fadeIn 0.2s ease-out;
 }
 
 .modal-card {
   max-width: 440px;
-  animation: fadeIn 0.25s ease-out;
 }
 
 /* Selector combinado (en vez de solo .modal-card-lg) a propósito: .glass-card
