@@ -1,3 +1,5 @@
+import { isMissed } from './dateHelpers';
+
 export const ESTADO_LABEL = { pending: 'Pendiente', review: 'En revisión', completed: 'Completada' };
 export const PRIORIDAD_LABEL = { high: 'ALTA', medium: 'MEDIA', low: 'BAJA' };
 
@@ -18,11 +20,17 @@ export const getTaskAccess = (task, user) => {
   const esAsignatario = String(task.assignedTo?._id || task.assignedTo) === String(user?._id);
   const estado = getEstado(task);
 
-  const puedeTocarCheck = esEmpresa || (esAsignatario && estado !== 'completed');
+  // Una vez vencida, el asignado ya no puede marcarla como lista (para eso está
+  // "solicitar extensión" en Incompletas) — la empresa sigue pudiendo confirmarla/reabrirla.
+  const vencida = isMissed(task);
+  const puedeTocarCheck = esEmpresa || (esAsignatario && estado !== 'completed' && !vencida);
   const puedeBorrar = esEmpresa;
+  // "Reabrir tarea" aplica tanto a una ya confirmada como a una vencida sin completar
+  // (en los dos casos hace falta pedir un motivo y una fecha nueva, no un simple toggle).
+  const esReapertura = estado === 'completed' || vencida;
   const tituloBoton = esEmpresa
-    ? (estado === 'completed' ? 'Reabrir tarea' : 'Confirmar tarea')
+    ? (esReapertura ? 'Reabrir tarea' : 'Confirmar tarea')
     : (estado === 'review' ? 'Deshacer' : 'Marcar como lista');
 
-  return { estado, esEmpresa, esAsignatario, puedeTocarCheck, puedeBorrar, tituloBoton };
+  return { estado, esEmpresa, esAsignatario, puedeTocarCheck, puedeBorrar, esReapertura, tituloBoton };
 };

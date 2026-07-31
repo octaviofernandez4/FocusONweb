@@ -39,6 +39,16 @@ const taskSchema = new mongoose.Schema({
         type: Date,
         default: null
     },
+    qualityLevel: {
+        // Nivel de calidad que la empresa le pone a una tarea al aprobarla.
+        type: String,
+        enum: ['standard', 'needs_adjustments'],
+        default: null
+    },
+    completionComment: {
+        type: String,
+        default: ''
+    },
     priority: {
         type: String,
         enum: ['low', 'medium', 'high'],

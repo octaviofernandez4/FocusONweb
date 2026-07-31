@@ -7,7 +7,10 @@ import { uploadFile } from '../services/uploadService';
 import { taskAssignSchema } from '../schemas/taskAssignSchema';
 import { useOrg } from '../hooks/useOrg';
 import { formatTamanio } from '../utils/fileSize';
+import { esFechaPasada } from '../utils/dateHelpers';
 import Modal from './Modal';
+import AlertModal from './AlertModal';
+import TaskCreatedModal from './TaskCreatedModal';
 import './NewTaskModal.css';
 
 const TIPOS_PERMITIDOS = ['image/png', 'image/jpeg', 'application/pdf'];
@@ -24,6 +27,7 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [fechaInvalida, setFechaInvalida] = useState(false);
+  const [tareaCreada, setTareaCreada] = useState(null);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(taskAssignSchema)
@@ -77,38 +81,36 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
 
   const quitarAdjunto = (url) => setAttachments((prev) => prev.filter((a) => a.url !== url));
 
-  // El input es type="date" (sin hora) — comparamos día calendario contra hoy,
-  // así una tarea con fecha límite hoy mismo sigue siendo válida.
-  const esFechaPasada = (fechaStr) => {
-    if (!fechaStr) return false;
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    const [anio, mes, dia] = fechaStr.split('-').map(Number);
-    return new Date(anio, mes - 1, dia) < hoy;
-  };
-
   const onSubmit = async (data) => {
     if (esFechaPasada(data.dueDate)) {
       setFechaInvalida(true);
       return;
     }
     try {
-      await createTask({
+      const { tarea } = await createTask({
         title: data.title,
         description: data.description || undefined,
         priority: data.priority || undefined,
-        dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
+        // "2026-07-30" a secas se interpreta como medianoche UTC — en Argentina (UTC-3)
+        // eso cae en "29/7 21:00" local, o sea "ayer". Le sumamos la hora para que la
+        // fecha se arme en horario local y una tarea para hoy quede para hoy.
+        dueDate: data.dueDate ? new Date(`${data.dueDate}T23:59:59`).toISOString() : undefined,
         assignedToEmail: data.assignedToEmail,
         project: data.project || undefined,
         attachments
       });
       await onCreated();
       onClose();
+      setTareaCreada(tarea);
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.mensaje || 'Hubo un error al asignar la tarea');
     }
   };
+
+  const nombreAsignado = tareaCreada?.assignedTo?.name
+    ? `${tareaCreada.assignedTo.name} ${tareaCreada.assignedTo.lastname || ''}`.trim()
+    : null;
 
   return (
     <>
@@ -211,17 +213,22 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
       </form>
     </Modal>
 
-    <Modal isOpen={fechaInvalida} onClose={() => setFechaInvalida(false)} title="">
-      <div className="invalid-date-alert">
-        <div className="invalid-date-alert-icon"><AlertTriangle size={26} /></div>
-        <h3>Fecha inválida</h3>
-        <p className="invalid-date-alert-error">Error: no podés seleccionar una fecha que ya pasó.</p>
-        <p>Para mantener la integridad del proyecto y asegurar un seguimiento preciso, los plazos de las tareas deben establecerse en fechas futuras.</p>
-        <button type="button" className="btn-primary invalid-date-alert-btn" onClick={() => setFechaInvalida(false)}>
-          CORREGIR FECHA
-        </button>
-      </div>
-    </Modal>
+    <AlertModal
+      isOpen={fechaInvalida}
+      onClose={() => setFechaInvalida(false)}
+      icon={AlertTriangle}
+      title="Fecha inválida"
+      buttonLabel="CORREGIR FECHA"
+    >
+      <p className="alert-modal-error">Error: no podés seleccionar una fecha que ya pasó.</p>
+      <p>Para mantener la integridad del proyecto y asegurar un seguimiento preciso, los plazos de las tareas deben establecerse en fechas futuras.</p>
+    </AlertModal>
+
+    <TaskCreatedModal
+      isOpen={!!tareaCreada}
+      onClose={() => setTareaCreada(null)}
+      assigneeName={nombreAsignado}
+    />
     </>
   );
 };

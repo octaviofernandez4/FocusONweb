@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CheckCircle2 } from 'lucide-react';
+import { Check, CheckCircle2, Lock } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import Modal from '../components/Modal';
+import AlertModal from '../components/AlertModal';
 import './MyTasks.css';
 
 const formatFechaHora = (dueDate) => {
@@ -22,6 +23,7 @@ const MyTasks = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [proyectoSeleccionado, setProyectoSeleccionado] = useState(null);
   const [tareaAConfirmar, setTareaAConfirmar] = useState(null);
+  const [accionRestringida, setAccionRestringida] = useState(false);
 
   const cargarTareas = useCallback(async () => {
     try {
@@ -82,11 +84,12 @@ const MyTasks = () => {
     }
   };
 
-  // Marcar como lista pide confirmación (es lo que dispara la revisión de la empresa);
-  // deshacerla no, ya que no tiene consecuencias para nadie más.
+  // Marcar como lista pide confirmación (dispara la revisión de la empresa). Una vez
+  // enviada, ya no se puede destildar desde acá — eso ahora depende solo de la empresa
+  // (confirmándola o reabriéndola), así nadie retira un envío a mitad de revisión.
   const handleCheckboxClick = (task) => {
     if (task.pendingReview) {
-      handleToggle(task);
+      setAccionRestringida(true);
     } else {
       setTareaAConfirmar(task);
     }
@@ -191,6 +194,15 @@ const MyTasks = () => {
           </div>
         </div>
       </Modal>
+
+      <AlertModal
+        isOpen={accionRestringida}
+        onClose={() => setAccionRestringida(false)}
+        icon={Lock}
+        title="Acción restringida"
+      >
+        <p>Solo una cuenta de empresa puede confirmar o reabrir una tarea.</p>
+      </AlertModal>
     </div>
   );
 };

@@ -37,6 +37,8 @@ const crearTarea = async (req, res) => {
         });
 
         await nuevaTarea.save();
+        // El modal de "tarea enviada" necesita el nombre de la persona asignada, no solo su ID.
+        await nuevaTarea.populate('assignedTo', 'name lastname email');
         res.status(201).json({ mensaje: '✅ Tarea creada con éxito', tarea: nuevaTarea });
     } catch (error) {
         console.error(error);
@@ -141,7 +143,7 @@ const limpiarTareasCompletadas = async (req, res) => {
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, completed, pendingReview, extensionRequested, extensionReason, extensionProposedDate, project, priority, assignedToEmail, attachments } = req.body;
+        const { title, description, dueDate, completed, pendingReview, extensionRequested, extensionReason, extensionProposedDate, qualityLevel, completionComment, project, priority, assignedToEmail, attachments } = req.body;
 
         const tarea = await Task.findOne({ _id: id, org: req.orgId });
         if (!tarea) {
@@ -195,15 +197,27 @@ const actualizarTarea = async (req, res) => {
             tarea.completed = completed;
             tarea.completedAt = completed ? new Date() : null;
             tarea.pendingReview = false;
+            if (completed) {
+                tarea.qualityLevel = qualityLevel || null;
+                tarea.completionComment = completionComment || '';
+            } else {
+                tarea.qualityLevel = null;
+                tarea.completionComment = '';
+            }
         } else if (pendingReview !== undefined && pendingReview !== tarea.pendingReview) {
-            // Solo la persona a la que se le asignó la tarea puede marcarla lista para revisión
-            // (o desmarcarla) — nadie puede tocar la tarea de otro compañero.
+            // Marcarla como lista (false→true) es cosa de la persona asignada. Pero una vez
+            // enviada, deshacerlo (true→false) ya no depende de ella — solo la empresa puede
+            // destrabarla (confirmándola o reabriéndola), así nadie "retira" un envío a mitad de revisión.
             const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
-            if (!esAsignatario) {
-                const solicitante = await User.findById(req.user.id).select('accountType');
-                if (!solicitante || solicitante.accountType !== 'empresa') {
+            const solicitante = await User.findById(req.user.id).select('accountType');
+            const esEmpresaSolicitante = solicitante?.accountType === 'empresa';
+
+            if (pendingReview) {
+                if (!esAsignatario && !esEmpresaSolicitante) {
                     return res.status(403).json({ mensaje: 'Solo la persona asignada puede marcar esta tarea como lista 🛑' });
                 }
+            } else if (!esEmpresaSolicitante) {
+                return res.status(403).json({ mensaje: 'Solo una cuenta de empresa puede confirmar o reabrir una tarea 🛑' });
             }
             tarea.pendingReview = pendingReview;
         } else if (extensionRequested !== undefined && extensionRequested !== tarea.extensionRequested) {

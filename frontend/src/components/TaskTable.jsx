@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Check, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess, ESTADO_LABEL, PRIORIDAD_LABEL } from '../utils/taskAccess';
 import { getProjectColor } from '../utils/projectColors';
+import ApproveTaskModal from './ApproveTaskModal';
 import './TaskTable.css';
 
 const formatFecha = (dueDate) => {
@@ -12,11 +14,22 @@ const formatFecha = (dueDate) => {
 
 // Tabla de tareas reutilizada por "Tareas del equipo" y el Dashboard de empresa.
 // Las acciones de cada fila respetan las mismas reglas que TaskCard (ver utils/taskAccess).
-const TaskTable = ({ tasks, onToggle, onDelete }) => {
+const TaskTable = ({ tasks, onToggle, onApprove, onDelete }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [tareaAAprobar, setTareaAAprobar] = useState(null);
 
   const abrirTarea = (task) => navigate(`/app/tasks/${task._id}`, { state: { task } });
+
+  const handleCheckClick = (task, esEmpresa, esReapertura) => {
+    // Confirmar (no reabrir) pasa por el modal de aprobación; el resto del check
+    // (marcar/deshacer del empleado, reabrir) sigue siendo instantáneo como antes.
+    if (esEmpresa && !esReapertura) {
+      setTareaAAprobar(task);
+    } else {
+      onToggle(task);
+    }
+  };
 
   return (
     <div className="task-table-wrap card-panel">
@@ -33,7 +46,7 @@ const TaskTable = ({ tasks, onToggle, onDelete }) => {
         </thead>
         <tbody>
           {tasks.map((task) => {
-            const { estado, esEmpresa, esAsignatario, puedeTocarCheck, puedeBorrar, tituloBoton } = getTaskAccess(task, user);
+            const { estado, esEmpresa, esAsignatario, puedeTocarCheck, puedeBorrar, esReapertura, tituloBoton } = getTaskAccess(task, user);
             const puedeAbrir = esEmpresa || esAsignatario;
             const color = getProjectColor(task.project?.color);
             return (
@@ -68,7 +81,11 @@ const TaskTable = ({ tasks, onToggle, onDelete }) => {
                       </button>
                     )}
                     {puedeTocarCheck && (
-                      <button className="icon-btn icon-btn-success" title={tituloBoton} onClick={() => onToggle(task)}>
+                      <button
+                        className="icon-btn icon-btn-success"
+                        title={tituloBoton}
+                        onClick={() => handleCheckClick(task, esEmpresa, esReapertura)}
+                      >
                         <Check size={15} />
                       </button>
                     )}
@@ -79,6 +96,16 @@ const TaskTable = ({ tasks, onToggle, onDelete }) => {
           })}
         </tbody>
       </table>
+
+      <ApproveTaskModal
+        isOpen={!!tareaAAprobar}
+        onClose={() => setTareaAAprobar(null)}
+        task={tareaAAprobar}
+        onSubmit={(data) => {
+          onApprove(tareaAAprobar, data);
+          setTareaAAprobar(null);
+        }}
+      />
     </div>
   );
 };
