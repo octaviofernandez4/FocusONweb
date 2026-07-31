@@ -143,7 +143,7 @@ const limpiarTareasCompletadas = async (req, res) => {
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, completed, pendingReview, extensionRequested, extensionReason, extensionProposedDate, qualityLevel, completionComment, project, priority, assignedToEmail, attachments } = req.body;
+        const { title, description, dueDate, completed, pendingReview, inProgress, extensionRequested, extensionReason, extensionProposedDate, qualityLevel, completionComment, project, priority, assignedToEmail, attachments } = req.body;
 
         const tarea = await Task.findOne({ _id: id, org: req.orgId });
         if (!tarea) {
@@ -197,6 +197,7 @@ const actualizarTarea = async (req, res) => {
             tarea.completed = completed;
             tarea.completedAt = completed ? new Date() : null;
             tarea.pendingReview = false;
+            tarea.inProgress = false;
             if (completed) {
                 tarea.qualityLevel = qualityLevel || null;
                 tarea.completionComment = completionComment || '';
@@ -220,6 +221,18 @@ const actualizarTarea = async (req, res) => {
                 return res.status(403).json({ mensaje: 'Solo una cuenta de empresa puede confirmar o reabrir una tarea 🛑' });
             }
             tarea.pendingReview = pendingReview;
+            if (pendingReview) tarea.inProgress = false;
+        } else if (inProgress !== undefined && inProgress !== tarea.inProgress) {
+            // "Empecé a trabajar en esto" — solo un indicador personal, lo puede
+            // tocar la persona asignada (o la empresa, como con todo lo demás).
+            const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
+            if (!esAsignatario) {
+                const solicitante = await User.findById(req.user.id).select('accountType');
+                if (!solicitante || solicitante.accountType !== 'empresa') {
+                    return res.status(403).json({ mensaje: 'Solo la persona asignada puede marcar esta tarea como en progreso 🛑' });
+                }
+            }
+            tarea.inProgress = inProgress;
         } else if (extensionRequested !== undefined && extensionRequested !== tarea.extensionRequested) {
             // Solo la persona asignada puede pedir más tiempo, y solo si la tarea está vencida.
             const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
