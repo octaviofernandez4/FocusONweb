@@ -24,6 +24,7 @@ const Incomplete = () => {
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [soloConExtension, setSoloConExtension] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     try {
@@ -43,8 +44,9 @@ const Incomplete = () => {
     cargarDatos();
   }, [cargarDatos]);
 
-  const incompletas = tasks.filter(isMissed).sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
-  const pidieronExtension = incompletas.filter((t) => t.extensionRequested).length;
+  const todasIncompletas = tasks.filter(isMissed).sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+  const pidieronExtension = todasIncompletas.filter((t) => t.extensionRequested).length;
+  const incompletas = soloConExtension ? todasIncompletas.filter((t) => t.extensionRequested) : todasIncompletas;
 
   const grupos = incompletas.reduce((acc, task) => {
     const label = groupLabel(task.dueDate);
@@ -89,7 +91,14 @@ const Incomplete = () => {
 
       {stats && (
         <div className="completed-stats">
-          <StatCard label="TAREAS INCOMPLETAS" value={incompletas.length} hint="Vencidas y sin resolver." tone="danger" />
+          <StatCard
+            label="TAREAS INCOMPLETAS"
+            value={todasIncompletas.length}
+            hint="Vencidas y sin resolver."
+            tone="danger"
+            onClick={() => setSoloConExtension(false)}
+            isActive={!soloConExtension}
+          />
           <StatCard label="TASA DE CUMPLIMIENTO" value={`${stats.completionRate}%`} hint="Completadas vs. perdidas." tone="success" />
           {esEmpresa && (
             <StatCard
@@ -97,6 +106,8 @@ const Incomplete = () => {
               value={pidieronExtension}
               hint="Esperando que les pongas una nueva fecha."
               tone="neutral"
+              onClick={() => setSoloConExtension((prev) => !prev)}
+              isActive={soloConExtension}
             />
           )}
         </div>
@@ -105,7 +116,9 @@ const Incomplete = () => {
       {isLoading ? (
         <p className="empty-state">Cargando tareas vencidas…</p>
       ) : incompletas.length === 0 ? (
-        <p className="empty-state">No tenés tareas vencidas. 🎉</p>
+        <p className="empty-state">
+          {soloConExtension ? 'Nadie pidió extensión todavía.' : 'No tenés tareas vencidas. 🎉'}
+        </p>
       ) : (
         Object.entries(grupos).map(([label, items]) => (
           <div key={label} className="completed-group">
