@@ -3,6 +3,21 @@
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   padding: 1.8rem 2rem;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.stat-card.is-clickable {
+  cursor: pointer;
+}
+
+.stat-card.is-clickable:hover {
+  border-color: var(--color-electric-light);
+  transform: translateY(-2px);
+}
+
+.stat-card.is-active {
+  border-color: var(--color-electric-light);
+  background: rgba(10, 108, 255, 0.08);
 }
 
 .stat-card-top {

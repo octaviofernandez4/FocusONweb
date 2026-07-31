@@ -1,13 +1,15 @@
 import { isMissed } from './dateHelpers';
 
-export const ESTADO_LABEL = { pending: 'Pendiente', review: 'En revisión', completed: 'Completada' };
+export const ESTADO_LABEL = { pending: 'Pendiente', progress: 'En progreso', review: 'En revisión', completed: 'Completada' };
 export const PRIORIDAD_LABEL = { high: 'ALTA', medium: 'MEDIA', low: 'BAJA' };
 
 // Estado de una tarea: 'completed' (confirmada por la empresa), 'review' (el empleado la
-// marcó como lista, esperando confirmación) o 'pending' (todavía sin marcar).
+// mandó a revisión, esperando confirmación), 'progress' (el empleado ya empezó pero
+// todavía no la mandó) o 'pending' (todavía sin tocar).
 export const getEstado = (task) => {
   if (task.completed) return 'completed';
   if (task.pendingReview) return 'review';
+  if (task.inProgress) return 'progress';
   return 'pending';
 };
 

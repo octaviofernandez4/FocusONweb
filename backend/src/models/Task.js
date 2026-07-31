@@ -25,6 +25,13 @@ const taskSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    inProgress: {
+        // El asignado marcó que ya empezó a trabajar en la tarea — distinto de
+        // pendingReview (que es "la mandé a revisión"), es solo un indicador
+        // de seguimiento personal antes de enviarla.
+        type: Boolean,
+        default: false
+    },
     extensionRequested: {
         // La persona asignada pidió más tiempo en una tarea vencida; solo una
         // cuenta empresa puede resolverlo poniéndole una nueva fecha límite.
