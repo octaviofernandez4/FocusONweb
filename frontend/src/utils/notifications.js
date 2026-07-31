@@ -20,7 +20,8 @@ export const construirNotificaciones = (tasks, user, esEmpresa) => {
         title: 'Tarea lista para confirmar',
         text: `"${t.title}" está esperando tu confirmación${t.assignedTo?.name ? ` de ${t.assignedTo.name}` : ''}.`,
         time: t.updatedAt
-      }));
+      }))
+      .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
     const anteriores = tasks
       .filter((t) => t.completed)
       .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0))
@@ -44,7 +45,8 @@ export const construirNotificaciones = (tasks, user, esEmpresa) => {
       title: 'Nueva tarea asignada',
       text: `Se te asignó "${t.title}"${t.dueDate ? `. La fecha límite es ${new Date(t.dueDate).toLocaleDateString('es-AR')}` : ''}.`,
       time: t.createdAt
-    }));
+    }))
+    .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
   const anteriores = misTareas
     .filter((t) => t.completed)
     .sort((a, b) => new Date(b.completedAt || 0) - new Date(a.completedAt || 0))
