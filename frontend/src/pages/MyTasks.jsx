@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, CheckCircle2, Lock } from 'lucide-react';
+import { Check, Lock } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
-import Modal from '../components/Modal';
+import ConfirmMarkReadyModal from '../components/ConfirmMarkReadyModal';
 import AlertModal from '../components/AlertModal';
 import './MyTasks.css';
 
@@ -145,6 +145,8 @@ const MyTasks = () => {
                   </div>
                   {task.pendingReview ? (
                     <span className="pill pill-amber">EN REVISIÓN</span>
+                  ) : task.inProgress ? (
+                    <span className="pill pill-sky">EN PROGRESO</span>
                   ) : task.priority === 'high' ? (
                     <span className="pill pill-rose">ALTA</span>
                   ) : null}
@@ -180,20 +182,12 @@ const MyTasks = () => {
         </div>
       </div>
 
-      <Modal isOpen={!!tareaAConfirmar} onClose={() => setTareaAConfirmar(null)} title="Confirmar tarea">
-        <div className="confirm-task">
-          <div className="confirm-task-icon"><CheckCircle2 size={26} /></div>
-          <h3>¿Confirmar realización de la tarea?</h3>
-          <p>
-            {tareaAConfirmar && `"${tareaAConfirmar.title}"`} se va a marcar como lista para revisión y tu
-            supervisor va a recibir la notificación.
-          </p>
-          <div className="confirm-task-actions">
-            <button className="btn-ghost" onClick={() => setTareaAConfirmar(null)}>Cancelar</button>
-            <button className="btn-primary" onClick={confirmarRealizacion}>Sí, confirmar</button>
-          </div>
-        </div>
-      </Modal>
+      <ConfirmMarkReadyModal
+        isOpen={!!tareaAConfirmar}
+        onClose={() => setTareaAConfirmar(null)}
+        task={tareaAConfirmar}
+        onConfirm={confirmarRealizacion}
+      />
 
       <AlertModal
         isOpen={accionRestringida}

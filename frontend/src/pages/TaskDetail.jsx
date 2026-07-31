@@ -128,7 +128,7 @@ const TaskDetail = () => {
         <div className="taskdetail-main card-panel">
           <h1>{task.title}</h1>
           <div className="taskdetail-meta-row">
-            <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : 'pill-neutral'}`}>
+            <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : estado === 'progress' ? 'pill-sky' : 'pill-neutral'}`}>
               {ESTADO_LABEL[estado]}
             </span>
             <span className="taskdetail-updated">{formatActualizada(task.updatedAt)}</span>

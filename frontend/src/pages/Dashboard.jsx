@@ -9,6 +9,7 @@ import { isSameLocalDay } from '../utils/dateHelpers';
 import { getProjectColor } from '../utils/projectColors';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
+import ApproveTaskModal from '../components/ApproveTaskModal';
 import './Dashboard.css';
 
 const formatFechaHoy = () => {
@@ -59,6 +60,7 @@ const Dashboard = () => {
 // --- Vista Empresa (admin) ---
 const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [tareaAAprobar, setTareaAAprobar] = useState(null);
   const pendientesDeConfirmacion = tasks.filter((t) => t.pendingReview && !t.completed);
 
   // Actividad real de la semana en curso (lunes a sábado, sin domingo): cuántas
@@ -98,13 +100,16 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
     return datos.map((d) => ({ ...d, porcentaje: Math.round((d.activas / max) * 100) }));
   }, [projects, tasks]);
 
-  const handleConfirmar = async (task) => {
+  const handleApproveSubmit = async ({ qualityLevel, comentario }) => {
+    if (!tareaAAprobar) return;
     try {
-      await updateTask(task._id, { ...task, completed: true });
+      await updateTask(tareaAAprobar._id, { ...tareaAAprobar, completed: true, qualityLevel, completionComment: comentario });
       await onRefresh();
     } catch (error) {
       console.error(error);
       alert(error.response?.data?.mensaje || 'Hubo un error al confirmar la tarea');
+    } finally {
+      setTareaAAprobar(null);
     }
   };
 
@@ -163,7 +168,7 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
                   <button className="icon-btn icon-btn-danger" title="Rechazar" onClick={() => handleRechazar(task)}>
                     <X size={16} />
                   </button>
-                  <button className="icon-btn icon-btn-success" title="Confirmar" onClick={() => handleConfirmar(task)}>
+                  <button className="icon-btn icon-btn-success" title="Confirmar" onClick={() => setTareaAAprobar(task)}>
                     <Check size={16} />
                   </button>
                 </div>
@@ -235,6 +240,13 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
       </div>
 
       <NewTaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onCreated={onRefresh} />
+
+      <ApproveTaskModal
+        isOpen={!!tareaAAprobar}
+        onClose={() => setTareaAAprobar(null)}
+        task={tareaAAprobar}
+        onSubmit={handleApproveSubmit}
+      />
     </div>
   );
 };

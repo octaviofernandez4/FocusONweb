@@ -68,7 +68,7 @@ const TaskTable = ({ tasks, onToggle, onApprove, onDelete }) => {
                   </span>
                 </td>
                 <td>
-                  <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : 'pill-neutral'}`}>
+                  <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : estado === 'progress' ? 'pill-sky' : 'pill-neutral'}`}>
                     {ESTADO_LABEL[estado]}
                   </span>
                 </td>

@@ -1,0 +1,41 @@
+.confirm-task {
+  text-align: center;
+}
+
+.confirm-task-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-brand);
+  color: white;
+}
+
+.confirm-task h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.6rem;
+}
+
+.confirm-task p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-task-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.8rem;
+  margin-top: 1.6rem;
+}
+
+.confirm-task-actions .btn-ghost,
+.confirm-task-actions .btn-primary {
+  width: auto;
+  margin-top: 0;
+  padding: 0.7rem 1.4rem;
+  font-size: 0.88rem;
+}
