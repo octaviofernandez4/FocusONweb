@@ -141,7 +141,7 @@ const limpiarTareasCompletadas = async (req, res) => {
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, completed, pendingReview, project, priority, assignedToEmail, attachments } = req.body;
+        const { title, description, dueDate, completed, pendingReview, extensionRequested, extensionReason, extensionProposedDate, project, priority, assignedToEmail, attachments } = req.body;
 
         const tarea = await Task.findOne({ _id: id, org: req.orgId });
         if (!tarea) {
@@ -151,7 +151,6 @@ const actualizarTarea = async (req, res) => {
         // Campos que cualquier miembro puede editar libremente
         if (title !== undefined) tarea.title = title;
         if (description !== undefined) tarea.description = description;
-        if (dueDate !== undefined) tarea.dueDate = dueDate;
         if (project !== undefined) tarea.project = project && typeof project === 'object' ? project._id : (project || null);
         if (priority !== undefined) tarea.priority = priority;
         if (attachments !== undefined) tarea.attachments = attachments;
@@ -167,6 +166,22 @@ const actualizarTarea = async (req, res) => {
                 }
                 tarea.assignedTo = miembroAsignado._id;
             }
+        }
+
+        // Cambiar la fecha límite es cosa de la empresa (sobre todo para reprogramar una
+        // tarea vencida). Comparamos contra el valor guardado para no bloquear guardados
+        // normales que reenvían la misma fecha sin intención de cambiarla.
+        const fechaNueva = dueDate !== undefined ? (dueDate ? new Date(dueDate).toISOString() : null) : undefined;
+        const fechaActual = tarea.dueDate ? tarea.dueDate.toISOString() : null;
+        if (fechaNueva !== undefined && fechaNueva !== fechaActual) {
+            const solicitante = await User.findById(req.user.id).select('accountType');
+            if (!solicitante || solicitante.accountType !== 'empresa') {
+                return res.status(403).json({ mensaje: 'Solo una cuenta de empresa puede reprogramar la fecha límite 🛑' });
+            }
+            tarea.dueDate = dueDate;
+            tarea.extensionRequested = false;
+            tarea.extensionReason = '';
+            tarea.extensionProposedDate = null;
         }
 
         // "completed" solo lo puede tocar una cuenta de empresa: confirma (true) o reabre (false) una tarea.
@@ -191,6 +206,24 @@ const actualizarTarea = async (req, res) => {
                 }
             }
             tarea.pendingReview = pendingReview;
+        } else if (extensionRequested !== undefined && extensionRequested !== tarea.extensionRequested) {
+            // Solo la persona asignada puede pedir más tiempo, y solo si la tarea está vencida.
+            const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
+            if (!esAsignatario) {
+                return res.status(403).json({ mensaje: 'Solo la persona asignada puede solicitar una extensión 🛑' });
+            }
+            const estaVencida = !tarea.completed && tarea.dueDate && tarea.dueDate < new Date();
+            if (!estaVencida) {
+                return res.status(400).json({ mensaje: 'Solo se puede solicitar una extensión en una tarea vencida 🛑' });
+            }
+            tarea.extensionRequested = extensionRequested;
+            if (extensionRequested) {
+                tarea.extensionReason = extensionReason || '';
+                tarea.extensionProposedDate = extensionProposedDate || null;
+            } else {
+                tarea.extensionReason = '';
+                tarea.extensionProposedDate = null;
+            }
         }
 
         await tarea.save();

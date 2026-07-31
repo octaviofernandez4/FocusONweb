@@ -60,8 +60,12 @@ const MyTasks = () => {
     ? misTareas.filter((t) => (t.project?._id || t.project) === proyectoSeleccionado._id)
     : misTareas;
 
-  const activas = misTareasDelProyecto.filter((t) => !t.completed);
-  const completadas = misTareasDelProyecto.filter((t) => t.completed);
+  // Una vez vencida la fecha, la tarea pasa a "perdida" y se ve en Completadas,
+  // no tiene sentido que siga colgada acá como si todavía se pudiera hacer a tiempo.
+  const ahora = new Date();
+  const activas = misTareasDelProyecto.filter(
+    (t) => !t.completed && !(t.dueDate && new Date(t.dueDate) < ahora)
+  );
   const tituloBox = proyectoSeleccionado ? proyectoSeleccionado.name : 'Mis tareas';
 
   const seleccionarProyecto = (project) => {
@@ -144,22 +148,6 @@ const MyTasks = () => {
                 </li>
               ))}
             </ul>
-          )}
-
-          {completadas.length > 0 && (
-            <div className="mytasks-completed">
-              <p className="mytasks-completed-title">Completadas ({completadas.length})</p>
-              <ul className="mytasks-list">
-                {completadas.slice(0, 5).map((task) => (
-                  <li key={task._id} className="mytasks-item is-done is-clickable" onClick={() => abrirTarea(task)}>
-                    <span className="mytasks-checkbox is-checked is-locked"><Check size={13} /></span>
-                    <div className="mytasks-item-body">
-                      <p className="mytasks-item-title is-done">{task.title}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
           )}
         </div>
 

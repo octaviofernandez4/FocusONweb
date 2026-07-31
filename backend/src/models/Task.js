@@ -25,6 +25,20 @@ const taskSchema = new mongoose.Schema({
         type: Boolean,
         default: false
     },
+    extensionRequested: {
+        // La persona asignada pidió más tiempo en una tarea vencida; solo una
+        // cuenta empresa puede resolverlo poniéndole una nueva fecha límite.
+        type: Boolean,
+        default: false
+    },
+    extensionReason: {
+        type: String,
+        default: ''
+    },
+    extensionProposedDate: {
+        type: Date,
+        default: null
+    },
     priority: {
         type: String,
         enum: ['low', 'medium', 'high'],

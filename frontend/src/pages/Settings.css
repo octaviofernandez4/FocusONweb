@@ -205,7 +205,8 @@
 
 .settings-avatar-wrap {
   position: relative;
-  width: fit-content;
+  width: 76px;
+  height: 76px;
   margin: 0 auto 1rem;
 }
 
@@ -290,7 +291,8 @@
 .settings-company-avatar-wrap {
   position: relative;
   flex-shrink: 0;
-  width: fit-content;
+  width: 64px;
+  height: 64px;
 }
 
 .settings-company-avatar {
