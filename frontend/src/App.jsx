@@ -8,6 +8,7 @@ import MyTasks from './pages/MyTasks';
 import TaskDetail from './pages/TaskDetail';
 import Inbox from './pages/Inbox';
 import Completed from './pages/Completed';
+import Incomplete from './pages/Incomplete';
 import Projects from './pages/Projects';
 import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
@@ -36,6 +37,7 @@ function App() {
           <Route path="tasks/:id" element={<TaskDetail />} />
           <Route path="inbox" element={<Inbox />} />
           <Route path="completed" element={<Completed />} />
+          <Route path="incomplete" element={<Incomplete />} />
           <Route path="projects" element={<Projects />} />
           <Route path="analytics" element={<Analytics />} />
           <Route path="settings" element={<Settings />} />

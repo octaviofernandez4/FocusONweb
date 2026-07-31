@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { Mail, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
+import { Mail, UploadCloud, FileText, X, Loader2, AlertTriangle } from 'lucide-react';
 import { createTask } from '../services/taskService';
 import { uploadFile } from '../services/uploadService';
 import { taskAssignSchema } from '../schemas/taskAssignSchema';
@@ -23,6 +23,7 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [fechaInvalida, setFechaInvalida] = useState(false);
 
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(taskAssignSchema)
@@ -76,7 +77,21 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
 
   const quitarAdjunto = (url) => setAttachments((prev) => prev.filter((a) => a.url !== url));
 
+  // El input es type="date" (sin hora) — comparamos día calendario contra hoy,
+  // así una tarea con fecha límite hoy mismo sigue siendo válida.
+  const esFechaPasada = (fechaStr) => {
+    if (!fechaStr) return false;
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    const [anio, mes, dia] = fechaStr.split('-').map(Number);
+    return new Date(anio, mes - 1, dia) < hoy;
+  };
+
   const onSubmit = async (data) => {
+    if (esFechaPasada(data.dueDate)) {
+      setFechaInvalida(true);
+      return;
+    }
     try {
       await createTask({
         title: data.title,
@@ -96,6 +111,7 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
   };
 
   return (
+    <>
     <Modal isOpen={isOpen} onClose={onClose} title="Asignar Nueva Tarea" size="lg">
       <p className="new-task-modal-subtitle">Configurá los detalles de la tarea para tu equipo.</p>
 
@@ -194,6 +210,19 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
         </div>
       </form>
     </Modal>
+
+    <Modal isOpen={fechaInvalida} onClose={() => setFechaInvalida(false)} title="">
+      <div className="invalid-date-alert">
+        <div className="invalid-date-alert-icon"><AlertTriangle size={26} /></div>
+        <h3>Fecha inválida</h3>
+        <p className="invalid-date-alert-error">Error: no podés seleccionar una fecha que ya pasó.</p>
+        <p>Para mantener la integridad del proyecto y asegurar un seguimiento preciso, los plazos de las tareas deben establecerse en fechas futuras.</p>
+        <button type="button" className="btn-primary invalid-date-alert-btn" onClick={() => setFechaInvalida(false)}>
+          CORREGIR FECHA
+        </button>
+      </div>
+    </Modal>
+    </>
   );
 };
 

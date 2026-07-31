@@ -138,3 +138,43 @@
   padding: 0.7rem 1.5rem;
   font-size: 0.9rem;
 }
+
+.invalid-date-alert {
+  text-align: center;
+}
+
+.invalid-date-alert-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.invalid-date-alert h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.7rem;
+}
+
+.invalid-date-alert-error {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--color-danger);
+  margin-bottom: 0.7rem;
+}
+
+.invalid-date-alert p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.invalid-date-alert-btn {
+  width: 100%;
+  margin-top: 1.6rem;
+  letter-spacing: 0.03em;
+}
