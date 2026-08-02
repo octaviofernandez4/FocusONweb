@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, ArrowLeft } from 'lucide-react';
 import { getProjectColor } from '../utils/projectColors';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess, PRIORIDAD_LABEL } from '../utils/taskAccess';
@@ -13,7 +13,7 @@ const formatFecha = (fecha) =>
 
 // Tarjeta del tablero de Proyectos — solo muestra info y navega al detalle
 // de la tarea (ahí viven los botones/modales de confirmar, marcar lista, etc.).
-const TaskCard = ({ task, onMoveToProgress }) => {
+const TaskCard = ({ task, onMoveToProgress, onMoveToPending }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const color = getProjectColor(task.project?.color);
@@ -35,13 +35,22 @@ const TaskCard = ({ task, onMoveToProgress }) => {
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  // En touch no hay drag-and-drop nativo confiable, así que "Por hacer" suma
-  // este botón (solo visible en mobile vía CSS) como alternativa a arrastrar.
+  // En touch no hay drag-and-drop nativo confiable, así que "Por hacer" y "En
+  // progreso" suman este botón (solo visible en mobile vía CSS) como
+  // alternativa a arrastrar.
   const mostrarBotonMover = puedeArrastrar && estado === 'pending' && onMoveToProgress;
+  // Volver de "En progreso" a "Por hacer" — solo un indicador personal que se
+  // deshace, nunca aplica si ya se mandó a revisión (eso ya no es "progress").
+  const mostrarBotonVolver = puedeArrastrar && estado === 'progress' && onMoveToPending;
 
   const handleMoveClick = (e) => {
     e.stopPropagation();
     onMoveToProgress(task._id);
+  };
+
+  const handleMoveBackClick = (e) => {
+    e.stopPropagation();
+    onMoveToPending(task._id);
   };
 
   const fecha = estado === 'completed' ? formatFecha(task.completedAt) : formatFecha(task.dueDate);
@@ -83,6 +92,12 @@ const TaskCard = ({ task, onMoveToProgress }) => {
       {mostrarBotonMover && (
         <button type="button" className="task-card-move-btn" onClick={handleMoveClick}>
           Mover a en progreso <ArrowRight size={14} />
+        </button>
+      )}
+
+      {mostrarBotonVolver && (
+        <button type="button" className="task-card-move-btn is-back" onClick={handleMoveBackClick}>
+          <ArrowLeft size={14} /> Volver a por hacer
         </button>
       )}
     </div>

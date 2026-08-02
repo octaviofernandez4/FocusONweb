@@ -12,7 +12,16 @@
   margin-bottom: 0.3rem;
 }
 
-.projects-new-btn {
+.projects-header-actions {
+  display: flex;
+  flex-shrink: 0;
+}
+
+/* Selector reforzado (no solo .projects-new-btn) a propósito: .btn-primary
+   en index.css también define width con la misma especificidad, y según el
+   orden en que el navegador cargó el CSS de cada página podía ganarle a esta
+   regla y dejar el botón estirado a ancho completo en su propia fila. */
+.projects-header-actions .projects-new-btn {
   width: auto;
   margin-top: 0;
   display: inline-flex;
@@ -381,11 +390,12 @@
   }
 
   .projects-header,
-  .projects-new-btn {
+  .projects-header-actions,
+  .projects-header-actions .projects-new-btn {
     width: 100%;
   }
 
-  .projects-new-btn {
+  .projects-header-actions .projects-new-btn {
     justify-content: center;
   }
 

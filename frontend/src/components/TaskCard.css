@@ -153,6 +153,17 @@
   background: rgba(10, 108, 255, 0.18);
 }
 
+.task-card-move-btn.is-back {
+  border-color: var(--border-subtle);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--text-secondary);
+}
+
+.task-card-move-btn.is-back:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
 @media (max-width: 900px), (pointer: coarse) {
   .task-card-move-btn {
     display: flex;
