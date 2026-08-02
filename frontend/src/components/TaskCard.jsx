@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { ArrowRight } from 'lucide-react';
 import { getProjectColor } from '../utils/projectColors';
 import { useAuth } from '../hooks/useAuth';
 import { getTaskAccess, PRIORIDAD_LABEL } from '../utils/taskAccess';
@@ -12,7 +13,7 @@ const formatFecha = (fecha) =>
 
 // Tarjeta del tablero de Proyectos — solo muestra info y navega al detalle
 // de la tarea (ahí viven los botones/modales de confirmar, marcar lista, etc.).
-const TaskCard = ({ task }) => {
+const TaskCard = ({ task, onMoveToProgress }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const color = getProjectColor(task.project?.color);
@@ -32,6 +33,15 @@ const TaskCard = ({ task }) => {
   const handleDragStart = (e) => {
     e.dataTransfer.setData('text/plain', task._id);
     e.dataTransfer.effectAllowed = 'move';
+  };
+
+  // En touch no hay drag-and-drop nativo confiable, así que "Por hacer" suma
+  // este botón (solo visible en mobile vía CSS) como alternativa a arrastrar.
+  const mostrarBotonMover = puedeArrastrar && estado === 'pending' && onMoveToProgress;
+
+  const handleMoveClick = (e) => {
+    e.stopPropagation();
+    onMoveToProgress(task._id);
   };
 
   const fecha = estado === 'completed' ? formatFecha(task.completedAt) : formatFecha(task.dueDate);
@@ -69,6 +79,12 @@ const TaskCard = ({ task }) => {
           </span>
         )}
       </div>
+
+      {mostrarBotonMover && (
+        <button type="button" className="task-card-move-btn" onClick={handleMoveClick}>
+          Mover a en progreso <ArrowRight size={14} />
+        </button>
+      )}
     </div>
   );
 };

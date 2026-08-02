@@ -16,6 +16,7 @@ body {
   background-attachment: fixed;
   color: var(--text-primary);
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 #root {
@@ -35,8 +36,8 @@ body {
 /* Efecto Cristal (Glassmorphism) */
 .glass-card {
   background: var(--bg-surface);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 20px;
   padding: 2.5rem;
@@ -119,6 +120,7 @@ body {
   display: inline-block;
   text-align: center;
   cursor: pointer;
+  touch-action: manipulation;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
@@ -270,4 +272,31 @@ body {
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 640px) {
+  /* El botón "Volver al inicio" es fixed al viewport; en mobile el card
+     (sobre todo el de Registro, con foto) arranca casi pegado arriba y el
+     botón terminaba flotando encima de esa imagen. Pasa a flujo normal,
+     apilado arriba del card, para que nunca se superpongan. */
+  .centered-page {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .back-home-btn {
+    position: static;
+    align-self: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .centered-page {
+    padding: 1rem;
+  }
+
+  .glass-card {
+    padding: 1.8rem 1.4rem;
+    border-radius: 16px;
+  }
 }

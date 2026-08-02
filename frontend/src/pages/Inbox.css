@@ -136,7 +136,32 @@
 }
 
 @media (max-width: 640px) {
+  .inbox-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .inbox-header-actions {
+    width: 100%;
+  }
+
+  .inbox-header-actions .btn-ghost,
+  .inbox-assign-btn {
+    flex: 1;
+    justify-content: center;
+  }
+
   .inbox-search {
     max-width: none;
+  }
+
+  .inbox-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inbox-pagination {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
   }
 }

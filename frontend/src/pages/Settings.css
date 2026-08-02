@@ -338,3 +338,33 @@
     grid-template-columns: 1fr;
   }
 }
+
+@media (max-width: 640px) {
+  .settings-page h1 {
+    font-size: 1.4rem;
+  }
+
+  .settings-section {
+    padding: 1.2rem;
+  }
+
+  .settings-company-form {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .settings-company-fields {
+    width: 100%;
+  }
+
+  .settings-stats-row {
+    gap: 1.2rem;
+    flex-wrap: wrap;
+  }
+
+  .member-list li {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
