@@ -114,47 +114,7 @@ const obtenerEstadisticasTareas = async (req, res) => {
     }
 };
 
-// 4. Restaurar todas las tareas completadas/perdidas (cualquier miembro)
-const restaurarTareasCompletadas = async (req, res) => {
-    try {
-        const ahora = new Date();
-
-        await Task.updateMany(
-            { org: req.orgId, completed: true },
-            { completed: false, completedAt: null, pendingReview: false }
-        );
-
-        await Task.updateMany(
-            { org: req.orgId, completed: false, dueDate: { $lt: inicioDeHoyArgentina() } },
-            { dueDate: ahora }
-        );
-
-        res.status(200).json({ mensaje: '↩️ Tareas restauradas correctamente' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: 'Error al restaurar las tareas', error: error.message });
-    }
-};
-
-// 5. Borrar definitivamente todas las tareas completadas/perdidas (solo admin)
-const limpiarTareasCompletadas = async (req, res) => {
-    try {
-        await Task.deleteMany({
-            org: req.orgId,
-            $or: [
-                { completed: true },
-                { completed: false, dueDate: { $lt: inicioDeHoyArgentina() } }
-            ]
-        });
-
-        res.status(200).json({ mensaje: '🗑️ Tareas completadas eliminadas' });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ mensaje: 'Error al limpiar las tareas', error: error.message });
-    }
-};
-
-// 6. Actualizar tarea (cualquier miembro de la organización; confirmar/reabrir es solo admin)
+// 4. Actualizar tarea (cualquier miembro de la organización; confirmar/reabrir es solo admin)
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
@@ -184,6 +144,13 @@ const actualizarTarea = async (req, res) => {
                 tarea.assignedTo = miembroAsignado._id;
             }
         }
+
+        // Guardamos el valor ORIGINAL antes de que la rama de dueDate (acá abajo) lo
+        // pueda resetear a false — si no, la comparación de la rama de extensionRequested
+        // más abajo lo compara contra el valor ya mutado y dispara por error el 403 de
+        // "solo el asignado puede pedir extensión" cuando la empresa reprograma la fecha
+        // de una tarea que tenía una extensión pedida (el payload reenvía el true viejo).
+        const extensionRequestedOriginal = tarea.extensionRequested;
 
         // Cambiar la fecha límite es cosa de la empresa (sobre todo para reprogramar una
         // tarea vencida). Comparamos contra el valor guardado para no bloquear guardados
@@ -248,7 +215,7 @@ const actualizarTarea = async (req, res) => {
                 }
             }
             tarea.inProgress = inProgress;
-        } else if (extensionRequested !== undefined && extensionRequested !== tarea.extensionRequested) {
+        } else if (extensionRequested !== undefined && extensionRequested !== extensionRequestedOriginal) {
             // Solo la persona asignada puede pedir más tiempo, y solo si la tarea está vencida.
             const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
             if (!esAsignatario) {
@@ -277,7 +244,7 @@ const actualizarTarea = async (req, res) => {
     }
 };
 
-// 7. Borrar tarea (solo cuenta empresa — ningún empleado puede borrar tareas, ni siquiera las propias)
+// 5. Borrar tarea (solo cuenta empresa — ningún empleado puede borrar tareas, ni siquiera las propias)
 const borrarTarea = async (req, res) => {
     try {
         const { id } = req.params;
@@ -305,8 +272,6 @@ module.exports = {
     crearTarea,
     obtenerTareas,
     obtenerEstadisticasTareas,
-    restaurarTareasCompletadas,
-    limpiarTareasCompletadas,
     actualizarTarea,
     borrarTarea
 };

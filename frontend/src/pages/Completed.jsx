@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { RotateCcw, Trash2 } from 'lucide-react';
-import { getTasks, getTaskStats, restoreAllTasks, clearAllCompletedTasks } from '../services/taskService';
+import { getTasks, getTaskStats } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
-import { useOrg } from '../hooks/useOrg';
 import { isSameLocalDay } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import TaskHistoryRow from '../components/TaskHistoryRow';
@@ -22,7 +20,6 @@ const Completed = () => {
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { isAdmin } = useOrg();
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
 
@@ -55,43 +52,12 @@ const Completed = () => {
     return acc;
   }, {});
 
-  const handleRestoreAll = async () => {
-    try {
-      await restoreAllTasks();
-      await cargarDatos();
-    } catch (error) {
-      console.error(error);
-      alert('Hubo un error al restaurar las tareas');
-    }
-  };
-
-  const handleClearAll = async () => {
-    if (!window.confirm('¿Borrar definitivamente todas las tareas completadas y perdidas?')) return;
-    try {
-      await clearAllCompletedTasks();
-      await cargarDatos();
-    } catch (error) {
-      console.error(error);
-      alert(error.response?.data?.mensaje || 'Hubo un error al limpiar las tareas');
-    }
-  };
-
   return (
     <div className="completed-page">
       <div className="completed-header">
         <div>
           <h1>Completadas</h1>
           <p className="page-subtitle">Revisá tus tareas terminadas.</p>
-        </div>
-        <div className="completed-header-actions">
-          <button className="btn-ghost" onClick={handleRestoreAll}>
-            <RotateCcw size={16} /> Restaurar todas
-          </button>
-          {isAdmin && (
-            <button className="btn-ghost" onClick={handleClearAll}>
-              <Trash2 size={16} /> Limpiar todas
-            </button>
-          )}
         </div>
       </div>
 

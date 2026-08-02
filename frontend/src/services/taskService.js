@@ -28,13 +28,3 @@ export const updateTask = async (id, taskData) => {
   const response = await api.put(`/tasks/${id}`, taskData);
   return response.data;
 };
-
-export const restoreAllTasks = async () => {
-  const response = await api.patch('/tasks/restore-all');
-  return response.data;
-};
-
-export const clearAllCompletedTasks = async () => {
-  const response = await api.delete('/tasks/clear-all');
-  return response.data;
-};

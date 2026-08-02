@@ -40,6 +40,59 @@
   margin-bottom: 2rem;
 }
 
+.inbox-status-filter-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.inbox-status-filter-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.9rem;
+}
+
+.inbox-status-filter-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.55rem 0.8rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.15s ease;
+}
+
+.inbox-status-filter-btn span {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.inbox-status-filter-btn:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  color: var(--text-primary);
+}
+
+.inbox-status-filter-btn.is-active {
+  border-color: transparent;
+  color: white;
+}
+
+.inbox-status-filter-btn.is-active span {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.inbox-status-filter-btn.is-pending.is-active { background: rgba(148, 163, 184, 0.35); }
+.inbox-status-filter-btn.is-progress.is-active { background: var(--color-electric); }
+.inbox-status-filter-btn.is-review.is-active { background: var(--color-warning); }
+
 .inbox-toolbar {
   display: flex;
   align-items: center;
