@@ -2,26 +2,30 @@ const express = require('express');
 const router = express.Router();
 
 // Importamos las funciones del controlador de usuarios [cite: 152, 154]
-const { crearUsuario, loginUsuario, obtenerPerfil, actualizarPerfil } = require('../controllers/userController');
+const { crearUsuario, loginUsuario, obtenerPerfil, actualizarPerfil, descartarNotificacion } = require('../controllers/userController');
 
 // Importamos los validadores para asegurar que los datos sean correctos [cite: 81, 87]
-const { validarRegistro, validarLogin, validarActualizacionPerfil } = require('../validators/userValidator');
+const { validarRegistro, validarLogin, validarActualizacionPerfil, validarDescartarNotificacion } = require('../validators/userValidator');
 
 const authMiddleware = require('../middlewares/authMiddleware');
+const authRateLimiter = require('../middlewares/authRateLimiter');
 
 // --- RUTAS DE AUTENTICACIÓN ---
 
 // Ruta para Registrarse (POST a /api/register)
 // Primero valida los campos y luego crea el usuario
-router.post('/register', validarRegistro, crearUsuario);
+router.post('/register', authRateLimiter, validarRegistro, crearUsuario);
 
 // Ruta para Iniciar Sesión (POST a /api/login) [cite: 153]
 // Primero valida los campos y luego genera el token JWT
-router.post('/login', validarLogin, loginUsuario);
+router.post('/login', authRateLimiter, validarLogin, loginUsuario);
 
 // --- RUTAS DE PERFIL ---
 
 router.get('/me', authMiddleware, obtenerPerfil);
 router.put('/me', authMiddleware, validarActualizacionPerfil, actualizarPerfil);
+
+// Descartar (ocultar para siempre) una notificación derivada de una tarea.
+router.patch('/me/notifications/dismiss', authMiddleware, validarDescartarNotificacion, descartarNotificacion);
 
 module.exports = router;
