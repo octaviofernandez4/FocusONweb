@@ -43,9 +43,83 @@
   color: var(--text-primary);
   font-weight: 600;
   margin-bottom: 0.35rem;
+  overflow-wrap: anywhere;
 }
 
 .task-table-actions {
   display: flex;
   gap: 0.4rem;
+}
+
+@media (max-width: 700px) {
+  .task-table-wrap {
+    overflow-x: visible;
+  }
+
+  .task-table {
+    min-width: 0;
+  }
+
+  .task-table thead {
+    display: none;
+  }
+
+  .task-table, .task-table tbody, .task-table tr, .task-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .task-table tr {
+    margin-bottom: 0.9rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.3rem 1rem;
+  }
+
+  .task-table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .task-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: right;
+  }
+
+  .task-table tr td:last-child {
+    border-bottom: none;
+  }
+
+  .task-table td::before {
+    content: attr(data-label);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  .task-table td:first-child {
+    justify-content: flex-start;
+    text-align: left;
+    padding-top: 0.9rem;
+  }
+
+  .task-table td:first-child::before {
+    content: none;
+  }
+
+  .task-table-title {
+    margin-bottom: 0.5rem;
+  }
+
+  .task-table-actions {
+    justify-content: flex-end;
+    width: 100%;
+  }
 }

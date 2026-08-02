@@ -11,12 +11,24 @@
 }
 
 @media (max-width: 900px) {
+  /* El <aside> del sidebar pasa a drawer fijo (position:fixed) y sale del
+     flujo, pero su barra mobile (hamburguesa + nombre) sigue siendo un
+     elemento normal — sin flex-direction:column acá, .app-shell (que sigue
+     siendo flex en fila con align-items:stretch) la estira a toda la altura
+     y la pone al lado del contenido en vez de arriba. */
   .app-shell {
     flex-direction: column;
   }
 
   .app-shell-content {
-    padding: 1.5rem;
+    padding: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-shell-content,
+  .company-app-shell-content {
+    padding: 1rem 0.9rem;
   }
 }
 
@@ -33,6 +45,6 @@
 
 @media (max-width: 900px) {
   .company-app-shell-content {
-    padding: 1.5rem;
+    padding: 1.2rem;
   }
 }

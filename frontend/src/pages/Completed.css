@@ -40,3 +40,18 @@
   padding-bottom: 0.4rem;
   border-bottom: 1px solid var(--border-subtle);
 }
+
+@media (max-width: 640px) {
+  .completed-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .completed-header-actions {
+    width: 100%;
+  }
+
+  .completed-header-actions .btn-ghost {
+    flex: 1;
+    justify-content: center;
+  }
+}

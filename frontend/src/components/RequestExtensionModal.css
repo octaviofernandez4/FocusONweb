@@ -24,6 +24,7 @@
 .extension-modal-task-title {
   font-weight: 600;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 
 .extension-modal-task-due {

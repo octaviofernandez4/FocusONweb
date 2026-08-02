@@ -50,6 +50,7 @@
 .task-history-title {
   font-weight: 600;
   color: var(--text-primary);
+  overflow-wrap: anywhere;
 }
 
 .task-history-meta-row {

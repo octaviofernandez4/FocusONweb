@@ -54,3 +54,21 @@
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+@media (max-width: 900px) {
+  .topbar {
+    padding: 0.8rem 0 1.2rem;
+    margin-bottom: 1.2rem;
+  }
+
+  .topbar-actions .icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .topbar-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 0.9rem;
+  }
+}

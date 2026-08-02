@@ -85,81 +85,159 @@
   color: var(--color-electric-light);
 }
 
+.company-navbar-hamburger {
+  display: none;
+}
+
+.company-navbar-drawer,
+.company-navbar-backdrop {
+  display: none;
+}
+
 @media (max-width: 900px) {
   .company-navbar-top {
-    grid-template-columns: auto;
-    justify-items: center;
+    grid-template-columns: auto 1fr auto;
     gap: 0.7rem;
-    text-align: center;
+    padding: 0.7rem 1.2rem;
   }
 
-  .company-navbar-logo-wrap,
-  .company-navbar-actions {
+  .company-navbar-hamburger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+
+  .company-navbar-logo-wrap {
     justify-self: center;
   }
 
+  .company-navbar-logo,
+  .company-navbar-logo-placeholder {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+  }
+
   .company-navbar-links {
-    justify-content: flex-start;
-    overflow-x: auto;
+    display: none;
+  }
+
+  .company-navbar-actions {
+    justify-self: end;
+    gap: 0.7rem;
+  }
+
+  .company-navbar-actions .icon-btn {
+    width: 42px;
+    height: 42px;
+  }
+
+  .company-navbar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(2, 6, 23, 0.6);
+    z-index: 40;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  .company-navbar-drawer {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: min(300px, 82vw);
+    padding: 1.2rem;
+    background: var(--bg-surface-solid);
+    border-right: 1px solid var(--border-subtle);
+    z-index: 50;
+    overflow-y: auto;
+    box-shadow: var(--shadow-elevated);
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .company-navbar-drawer.is-open {
+    transform: translateX(0);
+  }
+
+  .company-navbar-drawer-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-subtle);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+  }
+
+  .company-navbar-drawer-header span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .company-navbar-drawer-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border-subtle);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+
+  .company-navbar-drawer-link {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.65rem 0.7rem;
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: none;
+    border: none;
+    text-align: left;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .company-navbar-drawer-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+  }
+
+  .company-navbar-drawer-link.is-active {
+    background: rgba(10, 108, 255, 0.16);
+    color: var(--color-electric-light);
+  }
+
+  .company-navbar-drawer-logout {
+    margin-top: auto;
+    color: var(--color-danger);
   }
 }
 
-.confirm-logout {
-  text-align: center;
-}
-
-.confirm-logout-icon {
-  width: 52px;
-  height: 52px;
-  margin: 0 auto 1rem;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-danger-bg);
-  color: var(--color-danger);
-}
-
-.confirm-logout h3 {
-  font-size: 1.15rem;
-  margin-bottom: 0.6rem;
-}
-
-.confirm-logout p {
-  font-size: 0.88rem;
-  color: var(--text-secondary);
-  line-height: 1.5;
-}
-
-.confirm-logout-actions {
-  display: flex;
-  justify-content: center;
-  gap: 0.8rem;
-  margin-top: 1.6rem;
-}
-
-.confirm-logout-actions .btn-ghost {
-  width: auto;
-  margin-top: 0;
-  padding: 0.7rem 1.4rem;
-  font-size: 0.88rem;
-}
-
-.confirm-logout-actions .btn-danger {
-  width: auto;
-  margin-top: 0;
-  padding: 0.7rem 1.4rem;
-  font-size: 0.88rem;
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--color-danger);
-  color: white;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.confirm-logout-actions .btn-danger:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-}
+/* .confirm-logout* vive en styles/shared.css — la usan tanto CompanyNavbar
+   como Sidebar (cuenta empleado) para el modal de "¿Cerrar sesión?". */

@@ -26,6 +26,7 @@
 .taskdetail-main h1 {
   font-size: 1.5rem;
   margin-bottom: 0.7rem;
+  overflow-wrap: anywhere;
 }
 
 .taskdetail-meta-row {
@@ -145,6 +146,7 @@
   font-size: 0.88rem;
   color: var(--text-primary);
   font-weight: 600;
+  overflow-wrap: anywhere;
 }
 
 .taskdetail-actions {
@@ -162,6 +164,26 @@
 
 @media (max-width: 860px) {
   .taskdetail-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .taskdetail-main,
+  .taskdetail-details,
+  .taskdetail-actions {
+    padding: 1.2rem;
+  }
+
+  .taskdetail-main h1 {
+    font-size: 1.25rem;
+  }
+
+  .taskdetail-meta-row {
+    flex-wrap: wrap;
+  }
+
+  .taskdetail-attachments-grid {
     grid-template-columns: 1fr;
   }
 }

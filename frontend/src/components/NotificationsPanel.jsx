@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Bell, UserRoundPlus, CheckCircle2, ArrowRight } from 'lucide-react';
 import { getTasks } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { construirNotificaciones, formatRelativo } from '../utils/notifications';
 import './NotificationsPanel.css';
 
@@ -24,6 +25,7 @@ const NotificationsPanel = () => {
   const [tasks, setTasks] = useState([]);
   const [ignoradas, setIgnoradas] = useState([]);
   const [leidas, setLeidas] = useState(false);
+  useBodyScrollLock(isOpen);
 
   const cargar = useCallback(async () => {
     try {

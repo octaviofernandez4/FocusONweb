@@ -61,19 +61,19 @@ const TaskTable = ({ tasks, onToggle, onApprove, onDelete }) => {
                     <span className="pill" style={{ background: color.bg, color: color.text }}>{task.project.name.toUpperCase()}</span>
                   )}
                 </td>
-                <td>{task.assignedTo?.name ? `${task.assignedTo.name} ${task.assignedTo.lastname || ''}` : 'Sin asignar'}</td>
-                <td>
+                <td data-label="Asignado a">{task.assignedTo?.name ? `${task.assignedTo.name} ${task.assignedTo.lastname || ''}` : 'Sin asignar'}</td>
+                <td data-label="Prioridad">
                   <span className={`pill ${task.priority === 'high' ? 'pill-rose' : task.priority === 'low' ? 'pill-neutral' : 'pill-sky'}`}>
                     {PRIORIDAD_LABEL[task.priority] || 'MEDIA'}
                   </span>
                 </td>
-                <td>
+                <td data-label="Estado">
                   <span className={`pill ${estado === 'review' ? 'pill-amber' : estado === 'completed' ? 'pill-emerald' : estado === 'progress' ? 'pill-sky' : 'pill-neutral'}`}>
                     {ESTADO_LABEL[estado]}
                   </span>
                 </td>
-                <td>{formatFecha(task.dueDate)}</td>
-                <td>
+                <td data-label="Fecha límite">{formatFecha(task.dueDate)}</td>
+                <td data-label="Acciones">
                   <div className="task-table-actions" onClick={(e) => e.stopPropagation()}>
                     {puedeBorrar && (
                       <button className="icon-btn icon-btn-danger" title="Eliminar tarea" onClick={() => onDelete(task._id)}>

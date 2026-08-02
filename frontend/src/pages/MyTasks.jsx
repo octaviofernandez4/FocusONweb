@@ -1,17 +1,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Check, Lock } from 'lucide-react';
+import { Lock } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { isMissed, isSameLocalDay } from '../utils/dateHelpers';
 import ConfirmMarkReadyModal from '../components/ConfirmMarkReadyModal';
 import AlertModal from '../components/AlertModal';
+import TaskListItem from '../components/TaskListItem';
 import './MyTasks.css';
-
-const formatFechaHora = (dueDate) => {
-  if (!dueDate) return 'Sin fecha';
-  return new Date(dueDate).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-};
 
 // "Mis tareas" — solo la cuenta empleado la ve en el sidebar. Muestra únicamente
 // las tareas asignadas a mí; el tilde marca "lista para revisión" (nunca confirma).
@@ -62,12 +59,15 @@ const MyTasks = () => {
     ? misTareas.filter((t) => (t.project?._id || t.project) === proyectoSeleccionado._id)
     : misTareas;
 
-  // Una vez vencida la fecha, la tarea pasa a "perdida" y se ve en Completadas,
+  // Una vez vencida la fecha, la tarea pasa a "perdida" y se ve en Incompletas,
   // no tiene sentido que siga colgada acá como si todavía se pudiera hacer a tiempo.
-  const ahora = new Date();
-  const activas = misTareasDelProyecto.filter(
-    (t) => !t.completed && !(t.dueDate && new Date(t.dueDate) < ahora)
-  );
+  const activas = misTareasDelProyecto.filter((t) => !t.completed && !isMissed(t));
+
+  // Separadas para que se note cuáles hay que terminar hoy mismo, sin mezclarlas
+  // con lo que todavía tiene margen de días.
+  const paraHoy = activas.filter((t) => t.dueDate && isSameLocalDay(t.dueDate, new Date()));
+  const masAdelante = activas.filter((t) => !(t.dueDate && isSameLocalDay(t.dueDate, new Date())));
+
   const tituloBox = proyectoSeleccionado ? proyectoSeleccionado.name : 'Mis tareas';
 
   const seleccionarProyecto = (project) => {
@@ -126,33 +126,29 @@ const MyTasks = () => {
               {proyectoSeleccionado ? `No tenés tareas asignadas en ${proyectoSeleccionado.name}.` : 'No tenés tareas asignadas.'}
             </p>
           ) : (
-            <ul className="mytasks-list">
-              {activas.map((task) => (
-                <li key={task._id} className="mytasks-item is-clickable" onClick={() => abrirTarea(task)}>
-                  <button
-                    className={`mytasks-checkbox ${task.pendingReview ? 'is-checked' : ''}`}
-                    title={task.pendingReview ? 'Deshacer' : 'Marcar como lista'}
-                    onClick={(e) => { e.stopPropagation(); handleCheckboxClick(task); }}
-                  >
-                    {task.pendingReview && <Check size={13} />}
-                  </button>
-                  <div className="mytasks-item-body">
-                    <p className="mytasks-item-title">{task.title}</p>
-                    <span className="mytasks-item-meta">
-                      {task.project?.name && <>{task.project.name} · </>}
-                      {formatFechaHora(task.dueDate)}
-                    </span>
-                  </div>
-                  {task.pendingReview ? (
-                    <span className="pill pill-amber">EN REVISIÓN</span>
-                  ) : task.inProgress ? (
-                    <span className="pill pill-sky">EN PROGRESO</span>
-                  ) : task.priority === 'high' ? (
-                    <span className="pill pill-rose">ALTA</span>
-                  ) : null}
-                </li>
-              ))}
-            </ul>
+            <>
+              {paraHoy.length > 0 && (
+                <div className="mytasks-group">
+                  <h3 className="mytasks-group-title is-today">Para hoy</h3>
+                  <ul className="mytasks-list">
+                    {paraHoy.map((task) => (
+                      <TaskListItem key={task._id} task={task} onOpen={abrirTarea} onCheckboxClick={handleCheckboxClick} />
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {masAdelante.length > 0 && (
+                <div className="mytasks-group">
+                  {paraHoy.length > 0 && <h3 className="mytasks-group-title">Más adelante</h3>}
+                  <ul className="mytasks-list">
+                    {masAdelante.map((task) => (
+                      <TaskListItem key={task._id} task={task} onOpen={abrirTarea} onCheckboxClick={handleCheckboxClick} />
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>
           )}
         </div>
 

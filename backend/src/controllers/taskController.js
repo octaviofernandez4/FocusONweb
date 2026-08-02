@@ -2,6 +2,23 @@ const Task = require('../models/Task');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
 
+// Las fechas límite se guardan en UTC pero representan "fin del día en Argentina"
+// (ver NewTaskModal.jsx en el frontend, que arma el dueDate con T23:59:59 hora
+// local). Por eso "vencida" acá se evalúa contra el INICIO del día de hoy en
+// Argentina, no contra el instante exacto — así una tarea con vencimiento hoy
+// no cuenta como perdida antes de medianoche, sin importar a qué hora del día
+// haya quedado guardada (ej. tareas viejas sin fin de día 23:59:59).
+const OFFSET_ARGENTINA_MS = 3 * 60 * 60 * 1000; // UTC-3, Argentina no tiene horario de verano
+const inicioDeHoyArgentina = () => {
+    const ahoraDesplazado = new Date(Date.now() - OFFSET_ARGENTINA_MS);
+    const medianocheDesplazada = Date.UTC(
+        ahoraDesplazado.getUTCFullYear(),
+        ahoraDesplazado.getUTCMonth(),
+        ahoraDesplazado.getUTCDate()
+    );
+    return new Date(medianocheDesplazada + OFFSET_ARGENTINA_MS);
+};
+
 // 1. Crear tarea (solo cuenta empresa, ver requireCompanyAccount en la ruta)
 const crearTarea = async (req, res) => {
     try {
@@ -84,7 +101,7 @@ const obtenerEstadisticasTareas = async (req, res) => {
         const [totalCompleted, completedThisWeek, missedCount] = await Promise.all([
             Task.countDocuments({ ...base, completed: true }),
             Task.countDocuments({ ...base, completed: true, completedAt: { $gte: hace7dias } }),
-            Task.countDocuments({ ...base, completed: false, dueDate: { $lt: ahora } })
+            Task.countDocuments({ ...base, completed: false, dueDate: { $lt: inicioDeHoyArgentina() } })
         ]);
 
         const totalConsiderado = totalCompleted + missedCount;
@@ -108,7 +125,7 @@ const restaurarTareasCompletadas = async (req, res) => {
         );
 
         await Task.updateMany(
-            { org: req.orgId, completed: false, dueDate: { $lt: ahora } },
+            { org: req.orgId, completed: false, dueDate: { $lt: inicioDeHoyArgentina() } },
             { dueDate: ahora }
         );
 
@@ -122,13 +139,11 @@ const restaurarTareasCompletadas = async (req, res) => {
 // 5. Borrar definitivamente todas las tareas completadas/perdidas (solo admin)
 const limpiarTareasCompletadas = async (req, res) => {
     try {
-        const ahora = new Date();
-
         await Task.deleteMany({
             org: req.orgId,
             $or: [
                 { completed: true },
-                { completed: false, dueDate: { $lt: ahora } }
+                { completed: false, dueDate: { $lt: inicioDeHoyArgentina() } }
             ]
         });
 
@@ -239,7 +254,7 @@ const actualizarTarea = async (req, res) => {
             if (!esAsignatario) {
                 return res.status(403).json({ mensaje: 'Solo la persona asignada puede solicitar una extensión 🛑' });
             }
-            const estaVencida = !tarea.completed && tarea.dueDate && tarea.dueDate < new Date();
+            const estaVencida = !tarea.completed && tarea.dueDate && tarea.dueDate < inicioDeHoyArgentina();
             if (!estaVencida) {
                 return res.status(400).json({ mensaje: 'Solo se puede solicitar una extensión en una tarea vencida 🛑' });
             }

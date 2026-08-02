@@ -2,6 +2,7 @@
   position: fixed;
   inset: 0;
   background: rgba(2, 6, 23, 0.65);
+  -webkit-backdrop-filter: blur(3px);
   backdrop-filter: blur(3px);
   display: flex;
   align-items: flex-start;
@@ -13,6 +14,7 @@
 
 .modal-card {
   max-width: 440px;
+  overflow-wrap: anywhere;
 }
 
 /* Selector combinado (en vez de solo .modal-card-lg) a propósito: .glass-card
@@ -38,4 +40,39 @@
 
 .modal-card-lg .modal-header h3 {
   font-size: 1.6rem;
+}
+
+@media (max-width: 560px) {
+  .modal-overlay {
+    padding: 1.1rem 0.8rem;
+    align-items: center;
+  }
+
+  .modal-card {
+    padding: 1.6rem;
+    width: 100%;
+  }
+
+  .modal-card.modal-card-lg {
+    padding: 1.6rem;
+    width: 100%;
+  }
+
+  .modal-header h3,
+  .modal-card-lg .modal-header h3 {
+    font-size: 1.1rem;
+  }
+
+  /* Cubre todas las filas de botones de los modales (approve/reopen/extension/
+     new-task/confirm/etc, cada una con su propio nombre de clase "*-actions")
+     sin tener que tocar cada CSS por separado. */
+  .modal-card [class*="-actions"] {
+    flex-wrap: wrap;
+  }
+
+  .modal-card [class*="-actions"] > button,
+  .modal-card [class*="-actions"] > a {
+    flex: 1;
+    justify-content: center;
+  }
 }

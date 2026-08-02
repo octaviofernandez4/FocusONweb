@@ -19,6 +19,7 @@
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s ease;
 }
 
@@ -38,6 +39,7 @@
   background: rgba(255, 255, 255, 0.03);
   color: var(--text-secondary);
   cursor: pointer;
+  touch-action: manipulation;
   transition: all 0.2s ease;
 }
 
@@ -86,8 +88,8 @@
 
 .card-panel {
   background: var(--bg-surface);
-  backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
@@ -98,4 +100,82 @@
   color: var(--text-muted);
   font-style: italic;
   padding: 2rem 1rem;
+}
+
+/* Modal de confirmación "peligrosa" genérico — icono en círculo rojo, título,
+   texto y dos botones (Cancelar / acción en rojo). Lo usan "¿Cerrar sesión?"
+   (CompanyNavbar, Sidebar) y "¿Eliminar Proyecto?" (Projects). */
+.confirm-logout,
+.confirm-danger {
+  text-align: center;
+}
+
+.confirm-logout-icon,
+.confirm-danger-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.confirm-logout h3,
+.confirm-danger h3 {
+  font-size: 1.15rem;
+  margin-bottom: 0.6rem;
+}
+
+.confirm-logout p,
+.confirm-danger p {
+  font-size: 0.88rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.confirm-logout-actions,
+.confirm-danger-actions {
+  display: flex;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-top: 1.6rem;
+}
+
+.confirm-logout-actions .btn-ghost,
+.confirm-danger-actions .btn-ghost {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 0.7rem 1.3rem;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.confirm-logout-actions .btn-danger,
+.confirm-danger-actions .btn-danger {
+  width: auto;
+  flex-shrink: 0;
+  margin-top: 0;
+  padding: 0.7rem 1.3rem;
+  font-size: 0.88rem;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-danger);
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: all 0.2s ease;
+}
+
+.confirm-logout-actions .btn-danger:hover,
+.confirm-danger-actions .btn-danger:hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
 }

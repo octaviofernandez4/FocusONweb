@@ -116,6 +116,11 @@
   color: white;
 }
 
+.form-group.is-hidden-field {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .register-form-panel .btn-primary {
   display: flex;
   align-items: center;
@@ -135,5 +140,25 @@
 
   .register-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .register-form-panel {
+    padding: 1.8rem 1.4rem;
+  }
+
+  .register-image {
+    min-height: 180px;
+    padding: 1.1rem;
+  }
+
+  .register-image-text h3 {
+    font-size: 1.15rem;
+  }
+
+  .account-type-toggle button {
+    padding: 0.6rem 0.4rem;
+    font-size: 0.82rem;
   }
 }

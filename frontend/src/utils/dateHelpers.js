@@ -24,7 +24,16 @@ export const isTodayRelevant = (task) => {
 };
 
 // Tarea "vencida/perdida": sin completar y con fecha límite ya pasada.
-export const isMissed = (task) => Boolean(!task.completed && task.dueDate && new Date(task.dueDate) < new Date());
+// Compara por DÍA calendario, no por el timestamp exacto guardado — una tarea
+// para "hoy" sigue siendo válida hasta medianoche, más allá de a qué hora del
+// día se haya guardado la fecha límite (ej. tareas viejas sin fin de día 23:59:59).
+export const isMissed = (task) => {
+  if (task.completed || !task.dueDate) return false;
+  const vencimiento = new Date(task.dueDate);
+  const ahora = new Date();
+  if (isSameLocalDay(vencimiento, ahora)) return false;
+  return vencimiento < ahora;
+};
 
 // Valida un input type="date" (YYYY-MM-DD, sin hora) contra el día calendario de
 // hoy — así una fecha límite fijada para "hoy mismo" sigue siendo válida.
