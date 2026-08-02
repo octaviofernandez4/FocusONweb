@@ -30,8 +30,11 @@
   right: 0;
   width: 460px;
   max-width: min(460px, 92vw);
+  max-height: min(520px, 70vh);
   padding: 1.2rem;
   z-index: 50;
+  display: flex;
+  flex-direction: column;
   animation: fadeIn 0.15s ease-out;
 }
 
@@ -77,6 +80,14 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.notif-panel-header,
+.notif-panel-footer {
+  flex-shrink: 0;
 }
 
 .notif-empty {
@@ -198,7 +209,9 @@
     top: 70px;
     right: 1rem;
     left: 1rem;
+    bottom: 1rem;
     width: auto;
     max-width: none;
+    max-height: none;
   }
 }

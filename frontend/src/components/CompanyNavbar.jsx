@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Inbox, CheckCircle2, XCircle, FolderKanban, Settings, LogOut, Building2 } from 'lucide-react';
+import { LayoutDashboard, Inbox, CheckCircle2, XCircle, FolderKanban, Settings, LogOut, Building2, Menu, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import NotificationsPanel from './NotificationsPanel';
 import Modal from './Modal';
 import './CompanyNavbar.css';
@@ -23,8 +24,12 @@ const CompanyNavbar = () => {
   const { org } = useOrg();
   const navigate = useNavigate();
   const [confirmandoSalida, setConfirmandoSalida] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const closeMenu = () => setIsMenuOpen(false);
+  useBodyScrollLock(isMenuOpen);
 
   const cerrarSesion = () => {
+    closeMenu();
     logout();
     navigate('/login');
   };
@@ -32,6 +37,10 @@ const CompanyNavbar = () => {
   return (
     <header className="company-navbar">
       <div className="company-navbar-top">
+        <button className="company-navbar-hamburger" onClick={() => setIsMenuOpen(true)} aria-label="Abrir menú">
+          <Menu size={20} />
+        </button>
+
         <div className="company-navbar-logo-wrap">
           {org?.logoUrl ? (
             <img src={org.logoUrl} alt="Logo de la empresa" className="company-navbar-logo" />
@@ -66,6 +75,34 @@ const CompanyNavbar = () => {
           </button>
         </div>
       </div>
+
+      {isMenuOpen && <div className="company-navbar-backdrop" onClick={closeMenu} />}
+
+      <nav className={`company-navbar-drawer ${isMenuOpen ? 'is-open' : ''}`}>
+        <div className="company-navbar-drawer-header">
+          <span>{org?.name || 'Tu empresa'}</span>
+          <button className="company-navbar-drawer-close" onClick={closeMenu} aria-label="Cerrar menú">
+            <X size={20} />
+          </button>
+        </div>
+        {navItems.map(({ to, label, icon: Icon }) => (
+          <NavLink
+            key={to}
+            to={to}
+            onClick={closeMenu}
+            className={({ isActive }) => `company-navbar-drawer-link ${isActive ? 'is-active' : ''}`}
+          >
+            <Icon size={18} />
+            <span>{label}</span>
+          </NavLink>
+        ))}
+        <button
+          className="company-navbar-drawer-link company-navbar-drawer-logout"
+          onClick={() => { closeMenu(); setConfirmandoSalida(true); }}
+        >
+          <LogOut size={18} /> <span>Salir</span>
+        </button>
+      </nav>
 
       <Modal isOpen={confirmandoSalida} onClose={() => setConfirmandoSalida(false)} title="Cerrar sesión">
         <div className="confirm-logout">
