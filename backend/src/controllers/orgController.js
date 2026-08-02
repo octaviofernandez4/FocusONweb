@@ -3,6 +3,8 @@ const Organization = require('../models/Organization');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
 
+const SIETE_DIAS_MS = 7 * 24 * 60 * 60 * 1000;
+
 // 1. Obtener la organización activa del usuario
 const obtenerOrganizacionActual = async (req, res) => {
     try {
@@ -68,14 +70,15 @@ const listarMiembros = async (req, res) => {
     }
 };
 
-// 4. Generar (o regenerar) el link de invitación (solo admin)
+// 4. Generar (o regenerar) el link de invitación (solo admin) — vale 7 días
 const generarInvitacion = async (req, res) => {
     try {
         const inviteToken = crypto.randomBytes(16).toString('hex');
+        const inviteTokenExpiresAt = new Date(Date.now() + SIETE_DIAS_MS);
 
         const organizacion = await Organization.findByIdAndUpdate(
             req.orgId,
-            { inviteToken },
+            { inviteToken, inviteTokenExpiresAt },
             { new: true }
         );
 
@@ -84,7 +87,8 @@ const generarInvitacion = async (req, res) => {
         res.status(200).json({
             mensaje: '🔗 Link de invitación generado',
             inviteToken,
-            inviteUrl: `${frontendUrl}/join/${inviteToken}`
+            inviteUrl: `${frontendUrl}/join/${inviteToken}`,
+            expiresAt: inviteTokenExpiresAt
         });
     } catch (error) {
         console.error(error);
@@ -100,6 +104,10 @@ const unirseAOrganizacion = async (req, res) => {
         const organizacion = await Organization.findOne({ inviteToken: token });
         if (!organizacion) {
             return res.status(404).json({ mensaje: 'El link de invitación no es válido' });
+        }
+
+        if (organizacion.inviteTokenExpiresAt && organizacion.inviteTokenExpiresAt < new Date()) {
+            return res.status(410).json({ mensaje: 'El link de invitación expiró. Pedile a un admin uno nuevo.' });
         }
 
         await Membership.findOneAndUpdate(

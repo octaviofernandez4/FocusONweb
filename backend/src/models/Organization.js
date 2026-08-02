@@ -11,6 +11,10 @@ const organizationSchema = new mongoose.Schema({
         unique: true,
         sparse: true
     },
+    inviteTokenExpiresAt: {
+        type: Date,
+        default: null
+    },
     logoUrl: {
         type: String,
         default: null

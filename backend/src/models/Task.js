@@ -3,11 +3,14 @@ const mongoose = require('mongoose');
 const taskSchema = new mongoose.Schema({
     title: {
         type: String,
-        required: true
+        required: true,
+        trim: true,
+        maxlength: [200, 'El título no puede superar los 200 caracteres']
     },
     description: {
         type: String,
-        required: false
+        required: false,
+        maxlength: [5000, 'La descripción no puede superar los 5000 caracteres']
     },
     dueDate: {
         type: Date,
