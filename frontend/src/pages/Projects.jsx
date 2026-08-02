@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Plus, Pencil, Trash2, LayoutGrid, Clock, CheckCircle2, AlertTriangle, Circle } from 'lucide-react';
+import { Plus, Pencil, Trash2, LayoutGrid, Clock, CheckCircle2, AlertTriangle, Circle, Ban } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { deleteProject } from '../services/projectService';
 import { listMembers } from '../services/orgService';
@@ -13,6 +13,8 @@ import TaskCard from '../components/TaskCard';
 import NewTaskModal from '../components/NewTaskModal';
 import NewProjectModal from '../components/NewProjectModal';
 import ConfirmMarkReadyModal from '../components/ConfirmMarkReadyModal';
+import Modal from '../components/Modal';
+import AlertModal from '../components/AlertModal';
 import './Projects.css';
 
 const getInitials = (name, lastname) => `${name?.[0] || ''}${lastname?.[0] || ''}`.toUpperCase() || '?';
@@ -21,7 +23,7 @@ const getInitials = (name, lastname) => `${name?.[0] || ''}${lastname?.[0] || ''
 // con la lista de tarjetas. Si recibe `onDropTask`, además acepta que le
 // suelten una tarjeta arrastrada ("En progreso" y "Para revisión"). Agregar
 // tareas nuevas es solo desde el botón "Asignar nueva tarea" del encabezado.
-const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint }) => {
+const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint, onMoveToProgress }) => {
   const [arrastrandoEncima, setArrastrandoEncima] = useState(false);
 
   const handleDragOver = (e) => {
@@ -56,7 +58,7 @@ const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint 
             {onDropTask ? `Sin tareas. ${emptyDropHint}` : 'Sin tareas.'}
           </p>
         ) : (
-          tasks.map((task) => <TaskCard key={task._id} task={task} />)
+          tasks.map((task) => <TaskCard key={task._id} task={task} onMoveToProgress={onMoveToProgress} />)
         )}
       </div>
     </div>
@@ -82,6 +84,8 @@ const Projects = () => {
   const [editingProject, setEditingProject] = useState(null);
   const [isTaskModalOpen, setIsTaskModalOpen] = useState(false);
   const [tareaAConfirmar, setTareaAConfirmar] = useState(null);
+  const [proyectoAEliminar, setProyectoAEliminar] = useState(null);
+  const [borradoNoPermitido, setBorradoNoPermitido] = useState(false);
 
   const cargarDatos = useCallback(async () => {
     try {
@@ -185,15 +189,17 @@ const Projects = () => {
     setIsModalOpen(true);
   };
 
-  const handleEliminarProyecto = async (project) => {
-    if (!window.confirm(`¿Borrar el proyecto "${project.name}"? Solo se puede si no tiene tareas.`)) return;
+  const confirmarEliminarProyecto = async () => {
+    if (!proyectoAEliminar) return;
     try {
-      await deleteProject(project._id);
-      if (selectedId === project._id) seleccionarProyecto(null);
+      await deleteProject(proyectoAEliminar._id);
+      if (selectedId === proyectoAEliminar._id) seleccionarProyecto(null);
       await refreshOrg();
+      setProyectoAEliminar(null);
     } catch (error) {
       console.error(error);
-      alert(error.response?.data?.mensaje || 'Hubo un error al borrar el proyecto');
+      setProyectoAEliminar(null);
+      setBorradoNoPermitido(true);
     }
   };
 
@@ -303,7 +309,7 @@ const Projects = () => {
                   <button className="icon-btn" title="Editar proyecto" onClick={() => abrirEdicion(project)}>
                     <Pencil size={12} />
                   </button>
-                  <button className="icon-btn icon-btn-danger" title="Borrar proyecto" onClick={() => handleEliminarProyecto(project)}>
+                  <button className="icon-btn icon-btn-danger" title="Borrar proyecto" onClick={() => setProyectoAEliminar(project)}>
                     <Trash2 size={12} />
                   </button>
                 </div>
@@ -384,6 +390,7 @@ const Projects = () => {
             dotClass="is-neutral"
             count={columnas.porHacer.length}
             tasks={columnas.porHacer}
+            onMoveToProgress={!esEmpresa ? handleDropEnProgreso : undefined}
           />
           <BoardColumn
             label="En progreso"
@@ -433,6 +440,31 @@ const Projects = () => {
         task={tareaAConfirmar}
         onConfirm={confirmarMarcarLista}
       />
+
+      <Modal isOpen={!!proyectoAEliminar} onClose={() => setProyectoAEliminar(null)} title="Eliminar proyecto">
+        <div className="confirm-danger">
+          <div className="confirm-danger-icon"><AlertTriangle size={24} /></div>
+          <h3>¿Eliminar Proyecto?</h3>
+          <p>
+            ¿Estás seguro de que deseas eliminar el proyecto &quot;<strong>{proyectoAEliminar?.name}</strong>&quot;? Esta
+            acción solo se puede realizar si el proyecto no tiene tareas asociadas.
+          </p>
+          <div className="confirm-danger-actions">
+            <button className="btn-ghost" onClick={() => setProyectoAEliminar(null)}>Cancelar</button>
+            <button className="btn-danger" onClick={confirmarEliminarProyecto}>Confirmar Eliminación</button>
+          </div>
+        </div>
+      </Modal>
+
+      <AlertModal
+        isOpen={borradoNoPermitido}
+        onClose={() => setBorradoNoPermitido(false)}
+        icon={Ban}
+        title="Acción No Permitida"
+        buttonLabel="Entendido"
+      >
+        <p>No se puede eliminar un proyecto que todavía tiene tareas activas. Borrá o reasigná esas tareas a otro proyecto antes de intentarlo de nuevo.</p>
+      </AlertModal>
     </div>
   );
 };
