@@ -1,15 +1,17 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, ArrowRight, Check, X, Plus } from 'lucide-react';
+import { CalendarDays, ArrowRight, Check, X, Plus, Lock } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask } from '../services/taskService';
 import { listMembers } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { isSameLocalDay } from '../utils/dateHelpers';
-import { getProjectColor } from '../utils/projectColors';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
 import ApproveTaskModal from '../components/ApproveTaskModal';
+import ConfirmMarkReadyModal from '../components/ConfirmMarkReadyModal';
+import AlertModal from '../components/AlertModal';
+import TaskListItem from '../components/TaskListItem';
 import './Dashboard.css';
 
 const formatFechaHoy = () => {
@@ -54,7 +56,7 @@ const Dashboard = () => {
 
   return esEmpresa
     ? <CompanyView stats={stats} projects={projects} members={members} tasks={tasks} onRefresh={cargarDatos} />
-    : <EmployeeView user={user} tasks={tasks} stats={stats} navigate={navigate} />;
+    : <EmployeeView user={user} tasks={tasks} stats={stats} navigate={navigate} onRefresh={cargarDatos} />;
 };
 
 // --- Vista Empresa (admin) ---
@@ -252,7 +254,9 @@ const CompanyView = ({ stats, projects, members, tasks, onRefresh }) => {
 };
 
 // --- Vista Empleado (member) ---
-const EmployeeView = ({ user, tasks, stats, navigate }) => {
+const EmployeeView = ({ user, tasks, stats, navigate, onRefresh }) => {
+  const [tareaAConfirmar, setTareaAConfirmar] = useState(null);
+  const [accionRestringida, setAccionRestringida] = useState(false);
   const misTareas = tasks.filter((t) => String(t.assignedTo?._id || t.assignedTo) === String(user?._id));
   const hoy = new Date();
 
@@ -277,6 +281,34 @@ const EmployeeView = ({ user, tasks, stats, navigate }) => {
   const incompletasSemana = misTareas.filter(
     (t) => !t.completed && t.dueDate && new Date(t.dueDate) >= lunes && new Date(t.dueDate) <= domingo
   );
+
+  const abrirTarea = (task) => navigate(`/app/tasks/${task._id}`, { state: { task } });
+
+  const handleToggle = async (task) => {
+    try {
+      await updateTask(task._id, { ...task, pendingReview: !task.pendingReview });
+      await onRefresh();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al actualizar la tarea');
+    }
+  };
+
+  // Mismo criterio que "Mis tareas": marcar como lista pide confirmación, y una
+  // vez enviada solo la empresa puede destrabarla (confirmándola o reabriéndola).
+  const handleCheckboxClick = (task) => {
+    if (task.pendingReview) {
+      setAccionRestringida(true);
+    } else {
+      setTareaAConfirmar(task);
+    }
+  };
+
+  const confirmarRealizacion = async () => {
+    if (!tareaAConfirmar) return;
+    await handleToggle(tareaAConfirmar);
+    setTareaAConfirmar(null);
+  };
 
   return (
     <div className="dashboard-page">
@@ -313,29 +345,9 @@ const EmployeeView = ({ user, tasks, stats, navigate }) => {
             <p className="empty-state">No tenés tareas asignadas para hoy. 🎉</p>
           ) : (
             <ul className="dashboard-task-list">
-              {misTareasHoy.map((task) => {
-                const color = getProjectColor(task.project?.color);
-                return (
-                  <li
-                    key={task._id}
-                    className="is-clickable"
-                    onClick={() => navigate(`/app/tasks/${task._id}`, { state: { task } })}
-                  >
-                    <div>
-                      <p className="dashboard-task-title">{task.title}</p>
-                      <span className="dashboard-task-meta">
-                        {task.dueDate ? new Date(task.dueDate).toLocaleString('es-AR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'Sin fecha'}
-                        {task.project?.name && <> · {task.project.name}</>}
-                      </span>
-                    </div>
-                    {task.pendingReview ? (
-                      <span className="pill pill-amber">EN REVISIÓN</span>
-                    ) : task.priority === 'high' ? (
-                      <span className="pill" style={{ background: color.bg, color: color.text }}>ALTA</span>
-                    ) : null}
-                  </li>
-                );
-              })}
+              {misTareasHoy.map((task) => (
+                <TaskListItem key={task._id} task={task} onOpen={abrirTarea} onCheckboxClick={handleCheckboxClick} />
+              ))}
             </ul>
           )}
           <button className="dashboard-widget-link" onClick={() => navigate('/app/mytasks')}>
@@ -343,6 +355,22 @@ const EmployeeView = ({ user, tasks, stats, navigate }) => {
           </button>
         </div>
       </div>
+
+      <ConfirmMarkReadyModal
+        isOpen={!!tareaAConfirmar}
+        onClose={() => setTareaAConfirmar(null)}
+        task={tareaAConfirmar}
+        onConfirm={confirmarRealizacion}
+      />
+
+      <AlertModal
+        isOpen={accionRestringida}
+        onClose={() => setAccionRestringida(false)}
+        icon={Lock}
+        title="Acción restringida"
+      >
+        <p>Solo una cuenta de empresa puede confirmar o reabrir una tarea.</p>
+      </AlertModal>
     </div>
   );
 };
