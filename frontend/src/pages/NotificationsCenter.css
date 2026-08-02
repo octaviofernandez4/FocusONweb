@@ -124,6 +124,12 @@
   top: 1rem;
 }
 
+.notifcenter-detail-delete {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.2rem;
+}
+
 .notifcenter-detail-icon {
   width: 42px;
   height: 42px;
@@ -177,13 +183,13 @@
 
 .notifcenter-detail-actions {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 0.6rem;
-  flex-wrap: wrap;
 }
 
 .notifcenter-detail-btn {
-  width: auto;
+  width: 100%;
+  justify-content: center;
   margin-top: 0;
   padding: 0.6rem 1.1rem;
   font-size: 0.85rem;

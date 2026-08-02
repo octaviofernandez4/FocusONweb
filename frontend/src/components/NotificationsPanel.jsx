@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, UserRoundPlus, CheckCircle2, ArrowRight } from 'lucide-react';
+import { Bell, UserRoundPlus, CheckCircle2, ArrowRight, Trash2 } from 'lucide-react';
 import { getTasks } from '../services/taskService';
+import { dismissNotification } from '../services/profileService';
 import { useAuth } from '../hooks/useAuth';
 import { useBodyScrollLock } from '../hooks/useBodyScrollLock';
 import { construirNotificaciones, formatRelativo } from '../utils/notifications';
@@ -23,7 +24,9 @@ const NotificationsPanel = () => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [tasks, setTasks] = useState([]);
-  const [ignoradas, setIgnoradas] = useState([]);
+  // Arranca con lo que ya está descartado en la base (persiste entre sesiones);
+  // lo nuevo que se descarte en esta sesión se suma encima, optimista.
+  const [ignoradas, setIgnoradas] = useState(() => user?.dismissedNotifications || []);
   const [leidas, setLeidas] = useState(false);
   useBodyScrollLock(isOpen);
 
@@ -58,10 +61,11 @@ const NotificationsPanel = () => {
 
   const { nuevas: todasNuevas, anteriores: todasAnteriores } = construirNotificaciones(tasks, user, esEmpresa);
   const nuevas = todasNuevas.filter((n) => !ignoradas.includes(n.id));
+  const anteriores = todasAnteriores.filter((n) => !ignoradas.includes(n.id));
   const badgeCount = leidas ? 0 : nuevas.length;
 
   const nuevasVisibles = nuevas.slice(0, NUEVAS_LIMITE);
-  const anterioresVisibles = todasAnteriores.slice(0, ANTERIORES_LIMITE);
+  const anterioresVisibles = anteriores.slice(0, ANTERIORES_LIMITE);
 
   const irATarea = (task) => {
     if (task) {
@@ -72,7 +76,14 @@ const NotificationsPanel = () => {
     setIsOpen(false);
   };
 
-  const ignorar = (id) => setIgnoradas((prev) => [...prev, id]);
+  const ignorar = async (id) => {
+    setIgnoradas((prev) => [...prev, id]);
+    try {
+      await dismissNotification(id);
+    } catch (error) {
+      console.error('Error al descartar la notificación:', error);
+    }
+  };
 
   const marcarTodasLeidas = () => setLeidas(true);
 
@@ -96,7 +107,7 @@ const NotificationsPanel = () => {
           </div>
 
           <div className="notif-panel-body">
-            {nuevas.length === 0 && todasAnteriores.length === 0 && (
+            {nuevas.length === 0 && anteriores.length === 0 && (
               <p className="empty-state notif-empty">No tenés notificaciones todavía.</p>
             )}
 
@@ -135,6 +146,9 @@ const NotificationsPanel = () => {
                       </div>
                       <p className="notif-item-text">{n.text}</p>
                     </div>
+                    <button className="icon-btn icon-btn-danger notif-item-delete" title="Eliminar" onClick={() => ignorar(n.id)}>
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 ))}
               </div>

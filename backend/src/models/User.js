@@ -45,6 +45,13 @@ const userSchema = new mongoose.Schema({
         type: String,
         enum: ['empresa', 'empleado'],
         default: 'empresa'
+    },
+    // Notificaciones (derivadas de tareas, no tienen colección propia — ver
+    // utils/notifications.js en el frontend) que este usuario ya descartó.
+    // Guardamos el ID de la tarea que originó la notificación.
+    dismissedNotifications: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
+        default: []
     }
 }, {
     // Esto es un toque pro: agrega automáticamente la fecha de creación y actualización
