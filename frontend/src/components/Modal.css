@@ -42,7 +42,26 @@
   font-size: 1.6rem;
 }
 
-@media (max-width: 560px) {
+/* Cubre todas las filas de botones de los modales (approve/reopen/extension/
+   new-task/confirm/etc, cada una con su propio nombre de clase "*-actions")
+   sin tener que tocar cada CSS por separado. El overflow-wrap:anywhere de
+   .modal-card (necesario para que un título largo no se desborde) hace que,
+   si el botón se comprime, el texto se parta en cualquier punto — con
+   flex-shrink:0 + white-space:nowrap el botón nunca se comprime por debajo
+   de su ancho natural; si no entran los dos en la fila, la fila entera pasa
+   a la línea de abajo (flex-wrap) en vez de partir la palabra a la mitad. */
+.modal-card [class*="-actions"] {
+  flex-wrap: wrap;
+}
+
+.modal-card [class*="-actions"] > button,
+.modal-card [class*="-actions"] > a {
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+@media (max-width: 640px) {
   .modal-overlay {
     padding: 1.1rem 0.8rem;
     align-items: center;
@@ -63,13 +82,8 @@
     font-size: 1.1rem;
   }
 
-  /* Cubre todas las filas de botones de los modales (approve/reopen/extension/
-     new-task/confirm/etc, cada una con su propio nombre de clase "*-actions")
-     sin tener que tocar cada CSS por separado. */
-  .modal-card [class*="-actions"] {
-    flex-wrap: wrap;
-  }
-
+  /* En mobile además reparten el ancho completo entre los botones (además del
+     flex-shrink:0/nowrap/flex-wrap ya definidos arriba, que aplican siempre). */
   .modal-card [class*="-actions"] > button,
   .modal-card [class*="-actions"] > a {
     flex: 1;
