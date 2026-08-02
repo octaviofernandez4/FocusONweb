@@ -114,16 +114,21 @@ const Register = () => {
               <span className="error-text">{errors.email?.message}</span>
             </div>
 
-            {esEmpresa && (
-              <div className="form-group">
-                <label>Nombre de la empresa</label>
-                <div className="input-with-icon">
-                  <Building2 size={17} />
-                  <input type="text" placeholder="Ej: Acme Corp" {...register('companyName')} />
-                </div>
-                <span className="error-text">{errors.companyName?.message}</span>
+            {/* Se mantiene siempre en el layout (solo se oculta con visibility) para que
+                el modal no cambie de tamaño al alternar entre Empresa y Empleado. */}
+            <div className={`form-group ${esEmpresa ? '' : 'is-hidden-field'}`} aria-hidden={!esEmpresa}>
+              <label>Nombre de la empresa</label>
+              <div className="input-with-icon">
+                <Building2 size={17} />
+                <input
+                  type="text"
+                  placeholder="Ej: Acme Corp"
+                  tabIndex={esEmpresa ? undefined : -1}
+                  {...register('companyName')}
+                />
               </div>
-            )}
+              <span className="error-text">{esEmpresa ? errors.companyName?.message : ''}</span>
+            </div>
 
             <div className="form-group">
               <label>Contraseña</label>
