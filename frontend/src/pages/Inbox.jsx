@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Search, Plus, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
-import { getTaskAccess } from '../utils/taskAccess';
+import { getTaskAccess, getEstado, ESTADO_LABEL } from '../utils/taskAccess';
 import { isMissed } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
@@ -28,6 +28,7 @@ const Inbox = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [filtro, setFiltro] = useState('todas'); // 'todas' | 'mias' | id de proyecto
   const [dropdownAbierto, setDropdownAbierto] = useState(false);
+  const [estadoFiltro, setEstadoFiltro] = useState(null); // null | 'pending' | 'progress' | 'review'
 
   const cargarDatos = useCallback(async () => {
     try {
@@ -59,6 +60,17 @@ const Inbox = () => {
     return Array.from(vistos, ([id, name]) => ({ id, name }));
   }, [pendientes]);
 
+  // Cuántas tareas pendientes hay en cada estado — para los botones-filtro de la
+  // card "Tareas activas" (independiente del filtro de proyecto/búsqueda).
+  const conteoPorEstado = useMemo(() => {
+    const conteo = { pending: 0, progress: 0, review: 0 };
+    pendientes.forEach((t) => {
+      const estado = getEstado(t);
+      if (conteo[estado] !== undefined) conteo[estado] += 1;
+    });
+    return conteo;
+  }, [pendientes]);
+
   const filtradas = useMemo(() => {
     let base = pendientes;
     if (filtro === 'mias') {
@@ -67,12 +79,21 @@ const Inbox = () => {
       base = base.filter((t) => (t.project?._id || t.project) === filtro);
     }
 
+    if (estadoFiltro) {
+      base = base.filter((t) => getEstado(t) === estadoFiltro);
+    }
+
     const texto = busqueda.trim().toLowerCase();
     if (!texto) return base;
     return base.filter((t) =>
       t.title.toLowerCase().includes(texto) || (t.project?.name || '').toLowerCase().includes(texto)
     );
-  }, [pendientes, busqueda, filtro, user]);
+  }, [pendientes, busqueda, filtro, estadoFiltro, user]);
+
+  const elegirEstadoFiltro = (estado) => {
+    setEstadoFiltro((actual) => (actual === estado ? null : estado));
+    setPagina(1);
+  };
 
   const totalPaginas = Math.max(1, Math.ceil(filtradas.length / PAGE_SIZE));
   const paginaActual = Math.min(pagina, totalPaginas);
@@ -151,7 +172,21 @@ const Inbox = () => {
         <div className="inbox-stats">
           <StatCard label="TASA DE FINALIZACIÓN" value={`${stats.completionRate}%`} hint="Tareas completadas vs. perdidas." tone="success" />
           <StatCard label="TAREAS VENCIDAS" value={stats.missedCount} hint="Sin completar y fuera de fecha." tone="danger" />
-          <StatCard label="TAREAS ACTIVAS" value={pendientes.length} hint="Pendientes o en revisión ahora mismo." tone="neutral" />
+          <div className="stat-card inbox-status-filter-card">
+            <span className="stat-label">TAREAS ACTIVAS</span>
+            <div className="inbox-status-filter-buttons">
+              {['pending', 'progress', 'review'].map((estado) => (
+                <button
+                  key={estado}
+                  type="button"
+                  className={`inbox-status-filter-btn is-${estado} ${estadoFiltro === estado ? 'is-active' : ''}`}
+                  onClick={() => elegirEstadoFiltro(estado)}
+                >
+                  {ESTADO_LABEL[estado]} <span>{conteoPorEstado[estado]}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 

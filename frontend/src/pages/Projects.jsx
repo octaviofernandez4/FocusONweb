@@ -23,7 +23,7 @@ const getInitials = (name, lastname) => `${name?.[0] || ''}${lastname?.[0] || ''
 // con la lista de tarjetas. Si recibe `onDropTask`, además acepta que le
 // suelten una tarjeta arrastrada ("En progreso" y "Para revisión"). Agregar
 // tareas nuevas es solo desde el botón "Asignar nueva tarea" del encabezado.
-const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint, onMoveToProgress }) => {
+const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint, onMoveToProgress, onMoveToPending }) => {
   const [arrastrandoEncima, setArrastrandoEncima] = useState(false);
 
   const handleDragOver = (e) => {
@@ -58,7 +58,9 @@ const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint,
             {onDropTask ? `Sin tareas. ${emptyDropHint}` : 'Sin tareas.'}
           </p>
         ) : (
-          tasks.map((task) => <TaskCard key={task._id} task={task} onMoveToProgress={onMoveToProgress} />)
+          tasks.map((task) => (
+            <TaskCard key={task._id} task={task} onMoveToProgress={onMoveToProgress} onMoveToPending={onMoveToPending} />
+          ))
         )}
       </div>
     </div>
@@ -230,6 +232,21 @@ const Projects = () => {
     }
   };
 
+  // Soltar en "Por hacer" desde "En progreso": deshace el indicador personal
+  // de que ya había arrancado. Si ya está en "Para revisión" (o más allá) no
+  // es soltable acá — tareaSoltableDesde exige que venga justo de 'progress'.
+  const handleDropPorHacer = async (taskId) => {
+    const task = tareaSoltableDesde(taskId, 'progress');
+    if (!task) return;
+    try {
+      await updateTask(task._id, { ...task, inProgress: false });
+      await cargarDatos();
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al actualizar la tarea');
+    }
+  };
+
   // Soltar en "Para revisión": esto sí avisa a la empresa, así que pide la
   // misma confirmación que el tilde de "Mis tareas".
   const handleDropParaRevision = (taskId) => {
@@ -259,9 +276,11 @@ const Projects = () => {
           <p className="page-subtitle">Mirá en qué está trabajando cada persona y cómo avanzan las tareas.</p>
         </div>
         {esEmpresa && (
-          <button className="btn-primary projects-new-btn" onClick={abrirNuevaTarea}>
-            <Plus size={16} /> Asignar nueva tarea
-          </button>
+          <div className="projects-header-actions">
+            <button className="btn-primary projects-new-btn" onClick={abrirNuevaTarea}>
+              <Plus size={16} /> Asignar nueva tarea
+            </button>
+          </div>
         )}
       </div>
 
@@ -390,6 +409,8 @@ const Projects = () => {
             dotClass="is-neutral"
             count={columnas.porHacer.length}
             tasks={columnas.porHacer}
+            onDropTask={!esEmpresa ? handleDropPorHacer : null}
+            emptyDropHint='Arrastrá una de "En progreso" para volverla a la lista.'
             onMoveToProgress={!esEmpresa ? handleDropEnProgreso : undefined}
           />
           <BoardColumn
@@ -399,6 +420,7 @@ const Projects = () => {
             tasks={columnas.enProgreso}
             onDropTask={!esEmpresa ? handleDropEnProgreso : null}
             emptyDropHint='Arrastrá una de "Por hacer" para empezarla.'
+            onMoveToPending={!esEmpresa ? handleDropPorHacer : undefined}
           />
           <BoardColumn
             label="Para revisión"

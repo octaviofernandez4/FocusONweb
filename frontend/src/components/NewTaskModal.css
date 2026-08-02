@@ -38,6 +38,14 @@
   box-shadow: 0 0 10px var(--color-electric-glow);
 }
 
+.new-task-modal-textarea.input-error {
+  border-color: #ef4444;
+}
+
+.new-task-modal-textarea.input-error:focus {
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.3);
+}
+
 .new-task-modal-dropzone {
   border: 1px dashed var(--border-subtle);
   border-radius: var(--radius-md);
@@ -119,22 +127,28 @@
 
 .new-task-modal-actions {
   display: flex;
-  justify-content: flex-end;
-  gap: 0.8rem;
+  flex-direction: column;
+  gap: 0.6rem;
   margin-top: 1.6rem;
   padding-top: 1.2rem;
   border-top: 1px solid var(--border-subtle);
 }
 
 .new-task-modal-actions .btn-ghost {
-  width: auto;
+  width: 100%;
+  justify-content: center;
   padding: 0.7rem 1.3rem;
   font-size: 0.9rem;
+  color: var(--color-danger);
+  border-color: rgba(239, 68, 68, 0.3);
 }
 
 .new-task-modal-submit {
-  width: auto;
+  width: 100%;
   margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 0.7rem 1.5rem;
   font-size: 0.9rem;
 }

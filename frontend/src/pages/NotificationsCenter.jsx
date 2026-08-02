@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserRoundPlus, CheckCircle2, Trash2 } from 'lucide-react';
 import { getTasks } from '../services/taskService';
+import { dismissNotification } from '../services/profileService';
 import { useAuth } from '../hooks/useAuth';
 import { construirNotificaciones, formatRelativo } from '../utils/notifications';
 import ReassignTaskModal from '../components/ReassignTaskModal';
@@ -23,7 +24,9 @@ const NotificationsCenter = () => {
   const [tasks, setTasks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [tab, setTab] = useState('todas');
-  const [ignoradas, setIgnoradas] = useState([]);
+  // Arranca con lo que ya está descartado en la base (persiste entre sesiones);
+  // lo nuevo que se descarte en esta sesión se suma encima, optimista.
+  const [ignoradas, setIgnoradas] = useState(() => user?.dismissedNotifications || []);
   const [leidas, setLeidas] = useState(false);
   const [seleccionadaId, setSeleccionadaId] = useState(null);
   const [reasignando, setReasignando] = useState(null);
@@ -44,8 +47,9 @@ const NotificationsCenter = () => {
     cargar();
   }, [cargar]);
 
-  const { nuevas: todasNuevas, anteriores } = construirNotificaciones(tasks, user, esEmpresa);
+  const { nuevas: todasNuevas, anteriores: todasAnteriores } = construirNotificaciones(tasks, user, esEmpresa);
   const nuevas = todasNuevas.filter((n) => !ignoradas.includes(n.id));
+  const anteriores = todasAnteriores.filter((n) => !ignoradas.includes(n.id));
 
   const items = useMemo(() => {
     const conTipo = [
@@ -63,7 +67,14 @@ const NotificationsCenter = () => {
     if (task) navigate(`/app/tasks/${task._id}`, { state: { task } });
     else navigate('/app/inbox');
   };
-  const ignorar = (id) => setIgnoradas((prev) => [...prev, id]);
+  const ignorar = async (id) => {
+    setIgnoradas((prev) => [...prev, id]);
+    try {
+      await dismissNotification(id);
+    } catch (error) {
+      console.error('Error al descartar la notificación:', error);
+    }
+  };
   const marcarTodasLeidas = () => setLeidas(true);
 
   return (
@@ -114,6 +125,14 @@ const NotificationsCenter = () => {
 
           {seleccionada && (
             <div className="notifcenter-detail card-panel">
+              <button
+                className="icon-btn icon-btn-danger notifcenter-detail-delete"
+                title={seleccionada.esNueva ? 'Ignorar' : 'Eliminar'}
+                onClick={() => ignorar(seleccionada.id)}
+              >
+                <Trash2 size={15} />
+              </button>
+
               <div className={`notifcenter-detail-icon ${!seleccionada.esNueva ? 'is-muted' : ''}`}>
                 {seleccionada.esNueva ? <UserRoundPlus size={20} /> : <CheckCircle2 size={20} />}
               </div>
@@ -133,11 +152,6 @@ const NotificationsCenter = () => {
                 {esEmpresa && seleccionada.task && (
                   <button className="btn-ghost notifcenter-detail-btn" onClick={() => setReasignando(seleccionada.task)}>
                     Reasignar
-                  </button>
-                )}
-                {seleccionada.esNueva && (
-                  <button className="icon-btn icon-btn-danger" title="Ignorar" onClick={() => ignorar(seleccionada.id)}>
-                    <Trash2 size={15} />
                   </button>
                 )}
               </div>

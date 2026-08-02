@@ -144,7 +144,8 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
 
         <div className="form-group">
           <label>Descripción</label>
-          <textarea rows={3} placeholder="Detalles de la tarea…" {...register('description')} className="new-task-modal-textarea" />
+          <textarea rows={3} placeholder="Detalles de la tarea…" {...register('description')} className={`new-task-modal-textarea ${errors.description ? 'input-error' : ''}`} />
+          <span className="error-text">{errors.description?.message}</span>
         </div>
 
         <div className="form-group">

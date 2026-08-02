@@ -103,7 +103,7 @@ const loginUsuario = async (req, res) => {
 // 3. Obtener el perfil del usuario autenticado
 const obtenerPerfil = async (req, res) => {
     try {
-        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType avatarUrl');
+        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType avatarUrl dismissedNotifications');
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
@@ -139,9 +139,33 @@ const actualizarPerfil = async (req, res) => {
     }
 };
 
+// 5. Descartar una notificación (derivada de una tarea) para el usuario autenticado.
+// Queda guardada para siempre — no hay forma de "recuperarla" por ahora, es
+// el mismo comportamiento que tenía el "Ignorar" cuando era solo en memoria.
+const descartarNotificacion = async (req, res) => {
+    try {
+        const { taskId } = req.body;
+        if (!taskId) {
+            return res.status(400).json({ mensaje: 'Falta el ID de la tarea' });
+        }
+
+        const usuario = await User.findByIdAndUpdate(
+            req.user.id,
+            { $addToSet: { dismissedNotifications: taskId } },
+            { new: true }
+        ).select('dismissedNotifications');
+
+        res.status(200).json({ mensaje: '🔕 Notificación descartada', dismissedNotifications: usuario.dismissedNotifications });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error al descartar la notificación', error: error.message });
+    }
+};
+
 module.exports = {
     crearUsuario,
     loginUsuario,
     obtenerPerfil,
-    actualizarPerfil
+    actualizarPerfil,
+    descartarNotificacion
 };

@@ -3,7 +3,9 @@ const mongoose = require('mongoose');
 
 const validarTarea = [
     check('title', 'El título de la tarea es obligatorio').not().isEmpty(),
-    check('description').optional().trim(), // ← Solo este cambio
+    check('title').isLength({ max: 200 }).withMessage('El título no puede superar los 200 caracteres'),
+    check('description').optional().trim(),
+    check('description').optional().isLength({ max: 5000 }).withMessage('La descripción no puede superar los 5000 caracteres'),
     check('priority').optional().isIn(['low', 'medium', 'high']).withMessage('La prioridad debe ser low, medium o high'),
     // El frontend a veces manda "project" ya populado (objeto {_id, name, color})
     // en vez del ID crudo, según de dónde salió la tarea (GET vs POST). Aceptamos ambas formas.

@@ -7,7 +7,10 @@ const projectSchema = new mongoose.Schema({
         trim: true
     },
     color: {
+        // Tiene que coincidir con las claves de PROJECT_COLORS en
+        // frontend/src/utils/projectColors.js
         type: String,
+        enum: ['indigo', 'pink', 'emerald', 'amber', 'sky', 'violet', 'rose', 'teal'],
         default: 'indigo'
     },
     org: {

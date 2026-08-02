@@ -59,8 +59,21 @@ const validarLogin = [
     }
 ];
 
+const validarDescartarNotificacion = [
+    check('taskId', 'El ID de la tarea no es válido').isMongoId(),
+
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errores: errors.array() });
+        }
+        next();
+    }
+];
+
 module.exports = {
     validarRegistro,
     validarLogin,
-    validarActualizacionPerfil
+    validarActualizacionPerfil,
+    validarDescartarNotificacion
 };
