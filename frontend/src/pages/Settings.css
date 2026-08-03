@@ -52,6 +52,11 @@
 .settings-hint {
   font-size: 0.82rem;
   color: var(--text-muted);
+  margin-bottom: 1.1rem;
+}
+
+.settings-hint a {
+  color: var(--color-electric-light);
 }
 
 .settings-form-row {
@@ -65,6 +70,16 @@
   margin-top: 0.6rem;
   padding: 0.7rem 1.5rem;
   font-size: 0.9rem;
+}
+
+.settings-notif-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.settings-notif-actions .settings-submit {
+  margin-top: 0.6rem;
 }
 
 .invite-url-row {

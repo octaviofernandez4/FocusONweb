@@ -1,13 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Pencil, Link2, Copy, Check, Loader2, Building2 } from 'lucide-react';
+import { Pencil, Loader2, Building2 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
 import { updateProfile } from '../services/profileService';
 import { uploadFile } from '../services/uploadService';
-import { updateOrg, generateInvite, listMembers } from '../services/orgService';
+import { updateOrg, listMembers } from '../services/orgService';
 import { orgSchema } from '../schemas/orgSchema';
 import './Settings.css';
 
@@ -30,9 +31,8 @@ const Settings = () => {
   // Los ajustes de empresa y de empleado son paneles completamente distintos,
   // igual que el resto de la app (accountType decide, no el rol de Membership).
   const esEmpresa = user?.accountType === 'empresa';
+  const navigate = useNavigate();
   const [members, setMembers] = useState([]);
-  const [inviteUrl, setInviteUrl] = useState('');
-  const [copied, setCopied] = useState(false);
 
   const profileForm = useForm({ resolver: zodResolver(profileSchema) });
   const orgForm = useForm({ resolver: zodResolver(orgSchema) });
@@ -87,23 +87,6 @@ const Settings = () => {
     }
   };
 
-  const handleGenerateInvite = async () => {
-    try {
-      const data = await generateInvite();
-      setInviteUrl(data.inviteUrl);
-      setCopied(false);
-    } catch (error) {
-      console.error(error);
-      alert('Hubo un error al generar la invitación');
-    }
-  };
-
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
   return (
     <div className={`settings-page ${esEmpresa ? 'settings-page-company' : ''}`}>
       <h1>Configuración</h1>
@@ -121,10 +104,7 @@ const Settings = () => {
           refreshOrg={refreshOrg}
           orgForm={orgForm}
           onSubmitOrg={onSubmitOrg}
-          inviteUrl={inviteUrl}
-          copied={copied}
-          onGenerateInvite={handleGenerateInvite}
-          onCopy={handleCopy}
+          onGestionarEquipo={() => navigate('/app/team')}
         />
       ) : (
         <EmployeeSettings
@@ -289,9 +269,17 @@ const EmployeeSettings = ({ user, isAdmin, org, profileForm, onSubmitProfile, re
 };
 
 // --- Ajustes de cuenta empresa ---
-const CompanySettings = ({ isAdmin, projects, members, user, org, refreshOrg, orgForm, onSubmitOrg, inviteUrl, copied, onGenerateInvite, onCopy }) => {
+const CompanySettings = ({ isAdmin, projects, members, user, org, refreshOrg, orgForm, onSubmitOrg, onGestionarEquipo }) => {
   const logoInputRef = useRef(null);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+  const [notifEmail, setNotifEmail] = useState('');
+  const [notifPassword, setNotifPassword] = useState('');
+  const [isSavingNotif, setIsSavingNotif] = useState(false);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setNotifEmail(org?.notificationEmail || '');
+  }, [org?.notificationEmail]);
 
   const handleLogoChange = async (e) => {
     const file = e.target.files?.[0];
@@ -308,6 +296,38 @@ const CompanySettings = ({ isAdmin, projects, members, user, org, refreshOrg, or
       alert(error.response?.data?.mensaje || 'Hubo un error al subir el logo');
     } finally {
       setIsUploadingLogo(false);
+    }
+  };
+
+  const handleSubmitNotif = async (e) => {
+    e.preventDefault();
+    setIsSavingNotif(true);
+    try {
+      await updateOrg({ name: org?.name, notificationEmail: notifEmail.trim(), notificationEmailAppPassword: notifPassword.trim() });
+      await refreshOrg();
+      setNotifPassword('');
+      alert('Email de notificaciones actualizado ✏️');
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al guardar el email de notificaciones');
+    } finally {
+      setIsSavingNotif(false);
+    }
+  };
+
+  const handleQuitarNotif = async () => {
+    if (!confirm('¿Dejar de enviar los emails automáticos de tareas asignadas?')) return;
+    setIsSavingNotif(true);
+    try {
+      await updateOrg({ name: org?.name, notificationEmail: '', notificationEmailAppPassword: '' });
+      await refreshOrg();
+      setNotifEmail('');
+      setNotifPassword('');
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.mensaje || 'Hubo un error al quitar la configuración');
+    } finally {
+      setIsSavingNotif(false);
     }
   };
 
@@ -356,6 +376,50 @@ const CompanySettings = ({ isAdmin, projects, members, user, org, refreshOrg, or
       </form>
     </section>
 
+    <section className="card-panel settings-section settings-span-2">
+      <h3>Email para notificaciones automáticas</h3>
+      <p className="settings-hint">
+        Cuando le asignás una tarea a alguien, le llega un email avisándole — sale desde este Gmail, como si lo mandaras vos.
+        Necesitás una <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">contraseña de aplicación</a> de Google, no tu contraseña normal.
+      </p>
+      <form onSubmit={handleSubmitNotif}>
+        <div className="settings-form-row">
+          <div className="form-group">
+            <label>Gmail de la empresa</label>
+            <input
+              type="email"
+              disabled={!isAdmin}
+              placeholder="jefe@empresa.com"
+              value={notifEmail}
+              onChange={(e) => setNotifEmail(e.target.value)}
+            />
+          </div>
+          <div className="form-group">
+            <label>Contraseña de aplicación</label>
+            <input
+              type="password"
+              disabled={!isAdmin}
+              placeholder={org?.notificationEmail ? '••••••••••••••••' : 'abcd efgh ijkl mnop'}
+              value={notifPassword}
+              onChange={(e) => setNotifPassword(e.target.value)}
+            />
+          </div>
+        </div>
+        {isAdmin && (
+          <div className="settings-notif-actions">
+            <button type="submit" className="btn-primary settings-submit" disabled={isSavingNotif || !notifEmail}>
+              Guardar
+            </button>
+            {org?.notificationEmail && (
+              <button type="button" className="btn-ghost" onClick={handleQuitarNotif} disabled={isSavingNotif}>
+                Quitar
+              </button>
+            )}
+          </div>
+        )}
+      </form>
+    </section>
+
     <section className="card-panel settings-section">
       <h3>Datos de la organización</h3>
       <div className="form-group">
@@ -384,50 +448,7 @@ const CompanySettings = ({ isAdmin, projects, members, user, org, refreshOrg, or
           <span className="settings-stat-label">Proyectos</span>
         </div>
       </div>
-      <button type="button" className="btn-ghost settings-full-btn" onClick={() => proximamente('la gestión avanzada de equipo')}>Gestionar equipo</button>
-    </section>
-
-    <section className="card-panel settings-section settings-span-2">
-      <div className="settings-section-header">
-        <h3>Miembros del equipo</h3>
-        <button type="button" className="btn-ghost" onClick={onGenerateInvite}>
-          <Link2 size={16} /> Generar link de invitación
-        </button>
-      </div>
-
-      {inviteUrl && (
-        <div className="invite-url-row">
-          <input type="text" readOnly value={inviteUrl} />
-          <button type="button" className="icon-btn" onClick={onCopy} title="Copiar">
-            {copied ? <Check size={16} className="icon-success" /> : <Copy size={16} />}
-          </button>
-        </div>
-      )}
-
-      {members.length === 0 ? (
-        <p className="empty-state">Todavía no hay miembros para mostrar.</p>
-      ) : (
-        <ul className="member-list">
-          {members.map((m) => (
-            <li key={m.id}>
-              <div className="member-info">
-                {m.avatarUrl ? (
-                  <img src={m.avatarUrl} alt={`Foto de ${m.name}`} className="member-avatar member-avatar-img" />
-                ) : (
-                  <div className="member-avatar">{getInitials(m.name, m.lastname)}</div>
-                )}
-                <div>
-                  <p className="member-name">{m.name} {m.lastname}</p>
-                  <span className="member-email">{m.email}</span>
-                </div>
-              </div>
-              <span className={`pill ${m.role === 'admin' ? 'pill-indigo' : 'pill-neutral'}`}>
-                {m.role === 'admin' ? 'ADMIN' : 'MIEMBRO'}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      <button type="button" className="btn-ghost settings-full-btn" onClick={onGestionarEquipo}>Gestionar equipo</button>
     </section>
   </div>
   );
