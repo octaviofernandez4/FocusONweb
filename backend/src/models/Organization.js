@@ -29,6 +29,20 @@ const organizationSchema = new mongoose.Schema({
         default: '',
         trim: true
     },
+    // Gmail de la empresa desde la que salen los emails automáticos (ej. "te
+    // asignaron una tarea"). La contraseña de aplicación queda encriptada y
+    // con select:false — nunca se devuelve en una consulta normal.
+    notificationEmail: {
+        type: String,
+        default: null,
+        trim: true,
+        lowercase: true
+    },
+    notificationEmailAppPasswordEnc: {
+        type: String,
+        default: null,
+        select: false
+    },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',

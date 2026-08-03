@@ -1,6 +1,13 @@
 const Task = require('../models/Task');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
+const Organization = require('../models/Organization');
+const { enviarEmailTareaAsignada } = require('../utils/mailer');
+
+// La contraseña de aplicación de Gmail tiene select:false en el modelo — hay
+// que pedirla explícitamente con "+" para poder armar el transporter del mail.
+const buscarOrgParaNotificar = (orgId) =>
+    Organization.findById(orgId).select('name notificationEmail +notificationEmailAppPasswordEnc');
 
 // Las fechas límite se guardan en UTC pero representan "fin del día en Argentina"
 // (ver NewTaskModal.jsx en el frontend, que arma el dueDate con T23:59:59 hora
@@ -29,8 +36,9 @@ const crearTarea = async (req, res) => {
         const proyecto = project && typeof project === 'object' ? project._id : (project || null);
 
         let assignedTo = null;
+        let miembroAsignado = null;
         if (assignedToEmail) {
-            const miembroAsignado = await User.findOne({ email: assignedToEmail.toLowerCase().trim() });
+            miembroAsignado = await User.findOne({ email: assignedToEmail.toLowerCase().trim() });
             if (!miembroAsignado) {
                 return res.status(404).json({ mensaje: 'No existe ningún usuario con ese email' });
             }
@@ -56,6 +64,17 @@ const crearTarea = async (req, res) => {
         await nuevaTarea.save();
         // El modal de "tarea enviada" necesita el nombre de la persona asignada, no solo su ID.
         await nuevaTarea.populate('assignedTo', 'name lastname email');
+
+        if (miembroAsignado) {
+            const organizacion = await buscarOrgParaNotificar(req.orgId);
+            enviarEmailTareaAsignada({
+                org: organizacion,
+                destinatario: miembroAsignado.email,
+                nombreDestinatario: miembroAsignado.name,
+                tituloTarea: nuevaTarea.title
+            });
+        }
+
         res.status(201).json({ mensaje: '✅ Tarea creada con éxito', tarea: nuevaTarea });
     } catch (error) {
         console.error(error);
@@ -132,16 +151,18 @@ const actualizarTarea = async (req, res) => {
         if (priority !== undefined) tarea.priority = priority;
         if (attachments !== undefined) tarea.attachments = attachments;
 
+        const assignedToAnterior = tarea.assignedTo ? String(tarea.assignedTo) : null;
+        let miembroReasignado = null;
         if (assignedToEmail !== undefined) {
             if (!assignedToEmail) {
                 tarea.assignedTo = null;
             } else {
-                const miembroAsignado = await User.findOne({ email: assignedToEmail.toLowerCase().trim() });
-                const membresia = miembroAsignado && await Membership.findOne({ org: req.orgId, user: miembroAsignado._id });
-                if (!miembroAsignado || !membresia) {
+                miembroReasignado = await User.findOne({ email: assignedToEmail.toLowerCase().trim() });
+                const membresia = miembroReasignado && await Membership.findOne({ org: req.orgId, user: miembroReasignado._id });
+                if (!miembroReasignado || !membresia) {
                     return res.status(400).json({ mensaje: 'Ese email no pertenece a nadie de tu organización' });
                 }
-                tarea.assignedTo = miembroAsignado._id;
+                tarea.assignedTo = miembroReasignado._id;
             }
         }
 
@@ -236,6 +257,18 @@ const actualizarTarea = async (req, res) => {
         }
 
         await tarea.save();
+
+        // Solo avisamos si la tarea pasó a estar asignada a otra persona distinta
+        // de quien la tenía antes (no en cada guardado que reenvía el mismo email).
+        if (miembroReasignado && String(miembroReasignado._id) !== assignedToAnterior) {
+            const organizacion = await buscarOrgParaNotificar(req.orgId);
+            enviarEmailTareaAsignada({
+                org: organizacion,
+                destinatario: miembroReasignado.email,
+                nombreDestinatario: miembroReasignado.name,
+                tituloTarea: tarea.title
+            });
+        }
 
         res.status(200).json({ mensaje: '✏️ Tarea actualizada con éxito', tarea });
     } catch (error) {
