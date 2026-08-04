@@ -7,6 +7,7 @@ const validarTarea = [
     check('description').optional().trim(),
     check('description').optional().isLength({ max: 5000 }).withMessage('La descripción no puede superar los 5000 caracteres'),
     check('priority').optional().isIn(['low', 'medium', 'high']).withMessage('La prioridad debe ser low, medium o high'),
+    check('estimatedHours').optional({ checkFalsy: true }).isFloat({ min: 0, max: 999 }).withMessage('El tiempo estimado debe ser un número entre 0 y 999'),
     // El frontend a veces manda "project" ya populado (objeto {_id, name, color})
     // en vez del ID crudo, según de dónde salió la tarea (GET vs POST). Aceptamos ambas formas.
     check('project')

@@ -59,10 +59,43 @@ const taskSchema = new mongoose.Schema({
         type: String,
         default: ''
     },
+    // La empresa le pide una aclaración a la persona asignada antes de aprobar
+    // o reabrir (ej. una pregunta puntual sobre el trabajo entregado) — es un
+    // solo hilo activo por vez, no una mensajería completa.
+    clarificationRequested: {
+        type: Boolean,
+        default: false
+    },
+    clarificationQuestion: {
+        type: String,
+        default: '',
+        maxlength: [1000, 'La pregunta no puede superar los 1000 caracteres']
+    },
+    clarificationRequestedAt: {
+        type: Date,
+        default: null
+    },
+    clarificationAnswer: {
+        type: String,
+        default: '',
+        maxlength: [1000, 'La respuesta no puede superar los 1000 caracteres']
+    },
+    clarificationAnsweredAt: {
+        type: Date,
+        default: null
+    },
     priority: {
         type: String,
         enum: ['low', 'medium', 'high'],
         default: 'medium'
+    },
+    estimatedHours: {
+        // Cuánto tiempo estima la empresa que va a llevar — opcional, informativo,
+        // no afecta ninguna regla de negocio.
+        type: Number,
+        default: null,
+        min: 0,
+        max: 999
     },
     user: {
         // Quién creó la tarea (siempre una cuenta empresa, ver crearTarea)
@@ -98,5 +131,11 @@ const taskSchema = new mongoose.Schema({
         default: []
     }
 }, { timestamps: true });
+
+// Toda consulta de tareas filtra por organización, y la mayoría además por
+// asignado o por fecha límite (mis tareas, stats, vencidas) — sin esto cada
+// consulta escanea la colección entera a medida que crece.
+taskSchema.index({ org: 1, assignedTo: 1 });
+taskSchema.index({ org: 1, dueDate: 1 });
 
 module.exports = mongoose.model('Task', taskSchema);

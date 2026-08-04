@@ -22,13 +22,18 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       const respuesta = await loginUser(data);
-      await login(respuesta.token);
+      const perfil = await login(respuesta.token);
 
       if (inviteToken) {
         await joinOrg(inviteToken);
+        navigate('/app/dashboard');
+      } else if (perfil?.accountType === 'empresa' && perfil?.onboardingCompleted === false) {
+        // Se registró, vio el wizard de bienvenida, pero se fue antes de
+        // terminarlo (o de tocar "Omitir configuración") — se lo mostramos de nuevo.
+        navigate('/onboarding');
+      } else {
+        navigate('/app/dashboard');
       }
-
-      navigate('/app/dashboard');
     } catch (error) {
       console.error('Error del backend:', error.response?.data);
       alert(error.response?.data?.mensaje || 'Error al iniciar sesión. Revisá tus datos.');
@@ -62,7 +67,7 @@ const Login = () => {
           <div className="form-group">
             <div className="label-row">
               <label>Contraseña</label>
-              <span className="link-disabled" title="Todavía no disponible">¿Olvidaste tu contraseña?</span>
+              <Link to="/forgot-password" className="label-row-link">¿Olvidaste tu contraseña?</Link>
             </div>
             <PasswordField registration={register('password')} hasError={Boolean(errors.password)} />
             <span className="error-text">{errors.password?.message}</span>

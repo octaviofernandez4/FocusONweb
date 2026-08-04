@@ -10,6 +10,11 @@ export const updateProfile = async (profileData) => {
   return response.data;
 };
 
+export const changePassword = async ({ currentPassword, newPassword }) => {
+  const response = await api.put('/me/password', { currentPassword, newPassword });
+  return response.data;
+};
+
 export const dismissNotification = async (taskId) => {
   const response = await api.patch('/me/notifications/dismiss', { taskId });
   return response.data;

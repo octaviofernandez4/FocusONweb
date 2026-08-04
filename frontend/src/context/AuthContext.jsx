@@ -11,16 +11,18 @@ export const AuthProvider = ({ children }) => {
     if (!token) {
       setUser(null);
       setIsLoading(false);
-      return;
+      return null;
     }
 
     try {
       const perfil = await getProfile();
       setUser(perfil);
+      return perfil;
     } catch (error) {
       console.error('Error al cargar el perfil:', error);
       localStorage.removeItem('token');
       setUser(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +35,10 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (token) => {
     localStorage.setItem('token', token);
-    await cargarPerfil();
+    // Devuelve el perfil recién cargado — el "user" del contexto todavía no se
+    // actualizó en este mismo tick, así que quien llama a login() y necesita
+    // decidir algo (ej. a dónde navegar) con el user fresco, lo toma de acá.
+    return cargarPerfil();
   };
 
   const logout = () => {

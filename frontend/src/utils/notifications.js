@@ -12,7 +12,7 @@ export const formatRelativo = (fecha) => {
 // en la app todavía), separadas según lo que le corresponde ver a cada tipo de cuenta.
 export const construirNotificaciones = (tasks, user, esEmpresa) => {
   if (esEmpresa) {
-    const nuevas = tasks
+    const listasParaConfirmar = tasks
       .filter((t) => t.pendingReview && !t.completed)
       .map((t) => ({
         id: t._id,
@@ -20,7 +20,17 @@ export const construirNotificaciones = (tasks, user, esEmpresa) => {
         title: 'Tarea lista para confirmar',
         text: `"${t.title}" está esperando tu confirmación${t.assignedTo?.name ? ` de ${t.assignedTo.name}` : ''}.`,
         time: t.updatedAt
-      }))
+      }));
+    const aclaracionesRespondidas = tasks
+      .filter((t) => !t.clarificationRequested && t.clarificationAnswer)
+      .map((t) => ({
+        id: t._id,
+        task: t,
+        title: 'Te respondieron una aclaración',
+        text: `${t.assignedTo?.name ? `${t.assignedTo.name} respondió` : 'Respondieron'} tu pregunta sobre "${t.title}".`,
+        time: t.clarificationAnsweredAt
+      }));
+    const nuevas = [...listasParaConfirmar, ...aclaracionesRespondidas]
       .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
     const anteriores = tasks
       .filter((t) => t.completed)
@@ -37,7 +47,7 @@ export const construirNotificaciones = (tasks, user, esEmpresa) => {
   }
 
   const misTareas = tasks.filter((t) => String(t.assignedTo?._id || t.assignedTo) === String(user?._id));
-  const nuevas = misTareas
+  const nuevasAsignaciones = misTareas
     .filter((t) => !t.completed && !t.pendingReview)
     .map((t) => ({
       id: t._id,
@@ -45,7 +55,17 @@ export const construirNotificaciones = (tasks, user, esEmpresa) => {
       title: 'Nueva tarea asignada',
       text: `Se te asignó "${t.title}"${t.dueDate ? `. La fecha límite es ${new Date(t.dueDate).toLocaleDateString('es-AR')}` : ''}.`,
       time: t.createdAt
-    }))
+    }));
+  const aclaracionesPedidas = misTareas
+    .filter((t) => t.clarificationRequested)
+    .map((t) => ({
+      id: t._id,
+      task: t,
+      title: 'Te pidieron una aclaración',
+      text: `Te preguntaron sobre "${t.title}": "${t.clarificationQuestion}"`,
+      time: t.clarificationRequestedAt
+    }));
+  const nuevas = [...nuevasAsignaciones, ...aclaracionesPedidas]
     .sort((a, b) => new Date(b.time || 0) - new Date(a.time || 0));
   const anteriores = misTareas
     .filter((t) => t.completed)

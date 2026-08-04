@@ -1,8 +1,12 @@
+const crypto = require('crypto');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
 const Membership = require('../models/Membership');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { enviarEmailResetContrasena } = require('../utils/mailer');
+
+const UNA_HORA_MS = 60 * 60 * 1000;
 
 // 1. Registrar un nuevo usuario (ahora con contraseña encriptada)
 const crearUsuario = async (req, res) => {
@@ -50,6 +54,11 @@ const crearUsuario = async (req, res) => {
         // "empleado"; si no, respeta lo que eligió en el formulario de registro.
         nuevoUsuario.currentOrg = organizacion._id;
         nuevoUsuario.accountType = seUnioPorInvitacion ? 'empleado' : (accountType === 'empleado' ? 'empleado' : 'empresa');
+        // Solo una cuenta empresa recién fundada (no alguien que se unió por
+        // invitación) tiene sentido que pase por el wizard de bienvenida.
+        if (nuevoUsuario.accountType === 'empresa') {
+            nuevoUsuario.onboardingCompleted = false;
+        }
         await nuevoUsuario.save();
 
         res.status(201).json({
@@ -103,7 +112,7 @@ const loginUsuario = async (req, res) => {
 // 3. Obtener el perfil del usuario autenticado
 const obtenerPerfil = async (req, res) => {
     try {
-        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType avatarUrl dismissedNotifications');
+        const usuario = await User.findById(req.user.id).select('name lastname email statusText currentOrg accountType avatarUrl dismissedNotifications onboardingCompleted');
 
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
@@ -119,18 +128,19 @@ const obtenerPerfil = async (req, res) => {
 // 4. Actualizar el perfil del usuario autenticado (whitelist de campos)
 const actualizarPerfil = async (req, res) => {
     try {
-        const { name, lastname, statusText, avatarUrl } = req.body;
+        const { name, lastname, statusText, avatarUrl, onboardingCompleted } = req.body;
         const datosAActualizar = {};
         if (name !== undefined) datosAActualizar.name = name;
         if (lastname !== undefined) datosAActualizar.lastname = lastname;
         if (statusText !== undefined) datosAActualizar.statusText = statusText;
         if (avatarUrl !== undefined) datosAActualizar.avatarUrl = avatarUrl;
+        if (onboardingCompleted !== undefined) datosAActualizar.onboardingCompleted = onboardingCompleted;
 
         const usuarioActualizado = await User.findByIdAndUpdate(
             req.user.id,
             datosAActualizar,
             { new: true }
-        ).select('name lastname email statusText currentOrg avatarUrl');
+        ).select('name lastname email statusText currentOrg avatarUrl onboardingCompleted');
 
         res.status(200).json({ mensaje: '✏️ Perfil actualizado', usuario: usuarioActualizado });
     } catch (error) {
@@ -139,7 +149,92 @@ const actualizarPerfil = async (req, res) => {
     }
 };
 
-// 5. Descartar una notificación (derivada de una tarea) para el usuario autenticado.
+// 5. Cambiar la contraseña del usuario autenticado (pide la actual para confirmar)
+const cambiarContrasena = async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        const usuario = await User.findById(req.user.id);
+        if (!usuario) {
+            return res.status(404).json({ mensaje: 'Usuario no encontrado' });
+        }
+
+        const passwordCorrecta = await bcrypt.compare(currentPassword, usuario.password);
+        if (!passwordCorrecta) {
+            return res.status(400).json({ mensaje: 'La contraseña actual no es correcta' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        usuario.password = await bcrypt.hash(newPassword, salt);
+        await usuario.save();
+
+        res.status(200).json({ mensaje: '🔒 Contraseña actualizada' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error al cambiar la contraseña', error: error.message });
+    }
+};
+
+// 6. Pedir un link para recuperar la contraseña (sin sesión iniciada). Siempre
+// responde el mismo mensaje genérico exista o no ese email — si no, cualquiera
+// podría usar este endpoint para averiguar qué emails están registrados.
+const RESPUESTA_GENERICA_RESET = { mensaje: 'Si ese email está registrado, te mandamos un link para restablecer tu contraseña.' };
+
+const solicitarResetContrasena = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        const usuario = await User.findOne({ email: email.toLowerCase().trim() });
+        if (!usuario) {
+            return res.status(200).json(RESPUESTA_GENERICA_RESET);
+        }
+
+        const resetToken = crypto.randomBytes(32).toString('hex');
+        usuario.passwordResetToken = resetToken;
+        usuario.passwordResetTokenExpiresAt = new Date(Date.now() + UNA_HORA_MS);
+        await usuario.save();
+
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+        await enviarEmailResetContrasena({ destinatario: usuario.email, nombreDestinatario: usuario.name, resetUrl });
+
+        res.status(200).json(RESPUESTA_GENERICA_RESET);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error al solicitar la recuperación de contraseña', error: error.message });
+    }
+};
+
+// 7. Completar la recuperación de contraseña con el token que llegó por email
+const resetearContrasena = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+
+        const usuario = await User.findOne({
+            passwordResetToken: token,
+            passwordResetTokenExpiresAt: { $gt: new Date() }
+        }).select('+passwordResetToken +passwordResetTokenExpiresAt');
+
+        if (!usuario) {
+            return res.status(400).json({ mensaje: 'El link de recuperación no es válido o ya venció. Pedí uno nuevo.' });
+        }
+
+        const salt = await bcrypt.genSalt(10);
+        usuario.password = await bcrypt.hash(newPassword, salt);
+        usuario.passwordResetToken = null;
+        usuario.passwordResetTokenExpiresAt = null;
+        await usuario.save();
+
+        res.status(200).json({ mensaje: '🔒 Contraseña restablecida — ya podés iniciar sesión' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error al restablecer la contraseña', error: error.message });
+    }
+};
+
+// 6. Descartar una notificación (derivada de una tarea) para el usuario autenticado.
 // Queda guardada para siempre — no hay forma de "recuperarla" por ahora, es
 // el mismo comportamiento que tenía el "Ignorar" cuando era solo en memoria.
 const descartarNotificacion = async (req, res) => {
@@ -167,5 +262,8 @@ module.exports = {
     loginUsuario,
     obtenerPerfil,
     actualizarPerfil,
+    cambiarContrasena,
+    solicitarResetContrasena,
+    resetearContrasena,
     descartarNotificacion
 };

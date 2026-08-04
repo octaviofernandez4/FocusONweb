@@ -1,4 +1,5 @@
 const Task = require('../models/Task');
+const User = require('../models/User');
 
 const TREINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
 const UN_DIA_MS = 24 * 60 * 60 * 1000;
@@ -9,15 +10,26 @@ const UN_DIA_MS = 24 * 60 * 60 * 1000;
 const limpiarTareasAntiguas = async () => {
     const limite = new Date(Date.now() - TREINTA_DIAS_MS);
     try {
-        const resultado = await Task.deleteMany({
+        const filtro = {
             $or: [
                 { completed: true, completedAt: { $lt: limite } },
                 { completed: false, dueDate: { $lt: limite } }
             ]
-        });
-        if (resultado.deletedCount > 0) {
-            console.log(`🧹 Limpieza automática: se borraron ${resultado.deletedCount} tarea(s) con más de 30 días.`);
-        }
+        };
+
+        // Necesitamos los IDs de antemano (no solo el conteo) para poder limpiar
+        // las notificaciones descartadas que apuntan a estas tareas.
+        const tareasAEliminar = await Task.find(filtro).select('_id');
+        if (tareasAEliminar.length === 0) return;
+
+        const ids = tareasAEliminar.map((t) => t._id);
+        await Task.deleteMany({ _id: { $in: ids } });
+        await User.updateMany(
+            { dismissedNotifications: { $in: ids } },
+            { $pull: { dismissedNotifications: { $in: ids } } }
+        );
+
+        console.log(`🧹 Limpieza automática: se borraron ${ids.length} tarea(s) con más de 30 días.`);
     } catch (error) {
         console.error('Error en la limpieza automática de tareas:', error);
     }

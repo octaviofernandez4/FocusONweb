@@ -15,8 +15,18 @@ export const listMembers = async () => {
   return response.data;
 };
 
-export const generateInvite = async () => {
-  const response = await api.post('/orgs/me/invite');
+export const removeMember = async (userId) => {
+  const response = await api.delete(`/orgs/me/members/${userId}`);
+  return response.data;
+};
+
+export const generateInvite = async (email) => {
+  const response = await api.post('/orgs/me/invite', email ? { email } : undefined);
+  return response.data;
+};
+
+export const sendTestEmail = async () => {
+  const response = await api.post('/orgs/me/test-email');
   return response.data;
 };
 

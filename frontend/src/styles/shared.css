@@ -179,3 +179,28 @@
   filter: brightness(1.1);
   transform: translateY(-1px);
 }
+
+/* Confirmación por texto para acciones "peligrosas" con más impacto (ej.
+   eliminar un miembro que se lleva sus tareas puestas) — un click de más no
+   alcanza para dispararlas. */
+.confirm-danger-typecheck-label {
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+  text-align: left;
+}
+
+.confirm-danger-typecheck-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.confirm-danger-typecheck-input:focus {
+  outline: none;
+  border-color: var(--color-danger);
+}

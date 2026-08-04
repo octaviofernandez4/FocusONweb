@@ -1,0 +1,605 @@
+.team-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.8rem;
+}
+
+.team-header h1 {
+  font-size: 1.8rem;
+  margin-bottom: 0.3rem;
+}
+
+/* Selector reforzado (no solo .team-add-btn) a propósito: .btn-primary en
+   index.css define width:100% con la misma especificidad, y según el orden
+   de carga del CSS podía ganarle y estirar el botón a todo el ancho — ver
+   el mismo bug que tuvo el botón "Asignar nueva tarea" de Proyectos. */
+.team-header .team-add-btn {
+  width: auto;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.2rem;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* --- Stats --- */
+.team-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.6rem;
+}
+
+.team-stat-card {
+  padding: 1.4rem 1.5rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+}
+
+.team-stat-card.is-highlighted {
+  border-color: var(--color-electric-light);
+  background: rgba(10, 108, 255, 0.1);
+}
+
+.team-stat-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.9rem;
+}
+
+.team-stat-label {
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.team-stat-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(10, 108, 255, 0.16);
+  color: var(--color-electric-light);
+  flex-shrink: 0;
+}
+
+.team-stat-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 0.4rem;
+}
+
+.team-stat-hint {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.team-stat-bar {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  margin-bottom: 0.6rem;
+}
+
+.team-stat-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--color-electric-light);
+  border-radius: 999px;
+}
+
+/* --- Toolbar --- */
+.team-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-bottom: 1.2rem;
+}
+
+.team-toolbar select {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.9rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.team-toolbar select:focus {
+  outline: none;
+  border-color: var(--color-electric-light);
+}
+
+.team-clear-filters {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: var(--color-electric-light);
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.4rem 0.2rem;
+}
+
+.team-clear-filters:hover {
+  color: var(--text-primary);
+}
+
+/* --- Tabla --- */
+.team-table-wrap {
+  overflow-x: auto;
+}
+
+.team-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 720px;
+}
+
+.team-table th {
+  text-align: left;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 700;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.team-table td {
+  padding: 0.9rem 1.2rem;
+  border-bottom: 1px solid var(--border-subtle);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+
+.team-table tr:last-child td {
+  border-bottom: none;
+}
+
+.team-member-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.team-member-avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.team-member-avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.78rem;
+  background: var(--gradient-brand);
+  color: white;
+}
+
+.team-member-name {
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.88rem;
+  overflow-wrap: anywhere;
+}
+
+.team-member-email {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+}
+
+.team-rendimiento {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 120px;
+}
+
+.team-rendimiento-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.team-rendimiento-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--text-muted);
+}
+
+.team-rendimiento-fill.is-success { background: var(--color-success); }
+.team-rendimiento-fill.is-progress { background: var(--color-electric-light); }
+.team-rendimiento-fill.is-warning { background: var(--color-warning); }
+.team-rendimiento-fill.is-empty { background: transparent; }
+
+.team-rendimiento-value {
+  flex-shrink: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.team-estado-pill {
+  color: var(--color-success);
+  background: var(--color-success-bg);
+}
+
+/* --- Menú de acciones (los 3 puntitos) --- */
+.team-actions-cell {
+  position: relative;
+  display: inline-flex;
+}
+
+.team-actions-menu {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  right: 0;
+  min-width: 180px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+  padding: 0.4rem;
+  z-index: 20;
+}
+
+.team-actions-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  width: 100%;
+  background: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.7rem;
+  font-size: 0.83rem;
+  font-family: inherit;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.team-actions-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.team-actions-menu-item.is-danger {
+  color: var(--color-danger);
+}
+
+.team-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.2rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.team-pagination-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.team-pagination-actions .icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* --- Modal de invitar --- */
+.team-invite-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 1.2rem;
+}
+
+.team-invite-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-muted);
+}
+
+.team-invite-row input {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.team-invite-block {
+  margin-bottom: 1.3rem;
+}
+
+.team-invite-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 0.5rem;
+}
+
+.team-invite-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.team-invite-help-btn:hover {
+  color: var(--color-electric-light);
+}
+
+/* --- Modal de ayuda "cómo configurar el email" --- */
+.team-help-email {
+  text-align: left;
+}
+
+.team-help-email-icon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 108, 255, 0.16);
+  color: var(--color-electric-light);
+}
+
+.team-help-email p {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  margin-bottom: 1rem;
+}
+
+.team-help-email-steps {
+  margin: 0 0 1.4rem;
+  padding-left: 1.2rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.team-help-email-steps li + li {
+  margin-top: 0.5rem;
+}
+
+.team-help-email-steps a {
+  color: var(--color-electric-light);
+}
+
+.team-help-email-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.8rem;
+}
+
+.team-help-email-actions .btn-primary,
+.team-help-email-actions .btn-ghost {
+  width: auto;
+}
+
+.team-invite-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.team-invite-input-row input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  font-family: inherit;
+}
+
+.team-invite-input-row input:focus {
+  outline: none;
+  border-color: var(--color-electric-light);
+}
+
+.team-invite-phone-prefix {
+  flex-shrink: 0;
+  padding: 0.6rem 0.7rem;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Selector reforzado (no solo .team-invite-send) a propósito: .btn-primary en
+   index.css define width:100% con la misma especificidad, y según el orden
+   de carga del CSS le ganaba y estiraba el botón, aplastando el input de al
+   lado a ancho casi nulo — mismo bug que ya tuvieron "Asignar nueva tarea" y
+   "Añadir Miembro". */
+.team-invite-input-row .team-invite-send {
+  flex-shrink: 0;
+  width: auto;
+  margin-top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  font-size: 0.83rem;
+  white-space: nowrap;
+}
+
+.team-invite-feedback {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+}
+
+.team-invite-feedback.is-ok {
+  color: var(--color-success);
+}
+
+.team-invite-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin-bottom: 1.3rem;
+}
+
+.team-invite-divider::before,
+.team-invite-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+@media (max-width: 480px) {
+  .team-invite-input-row {
+    flex-wrap: wrap;
+  }
+
+  .team-invite-input-row .team-invite-send {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .team-help-email-actions {
+    flex-direction: column-reverse;
+  }
+
+  .team-help-email-actions .btn-primary,
+  .team-help-email-actions .btn-ghost {
+    width: 100%;
+  }
+}
+
+@media (max-width: 860px) {
+  .team-table-wrap {
+    overflow-x: visible;
+  }
+
+  .team-table {
+    min-width: 0;
+  }
+
+  .team-table thead {
+    display: none;
+  }
+
+  .team-table, .team-table tbody, .team-table tr, .team-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .team-table tr {
+    margin-bottom: 0.9rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 0.3rem 1rem;
+  }
+
+  .team-table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .team-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--border-subtle);
+    text-align: right;
+  }
+
+  .team-table tr td:last-child {
+    border-bottom: none;
+  }
+
+  .team-table td::before {
+    content: attr(data-label);
+    font-size: 0.68rem;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    font-weight: 700;
+    flex-shrink: 0;
+    text-align: left;
+  }
+
+  .team-table td:first-child {
+    justify-content: flex-start;
+    text-align: left;
+    padding-top: 0.9rem;
+  }
+
+  .team-table td:first-child::before {
+    content: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .team-header h1 {
+    font-size: 1.4rem;
+  }
+
+  .team-header,
+  .team-header .team-add-btn {
+    width: 100%;
+  }
+
+  .team-header .team-add-btn {
+    justify-content: center;
+  }
+
+  .team-toolbar select {
+    flex: 1;
+    min-width: 120px;
+  }
+
+  .team-clear-filters {
+    margin-left: 0;
+    width: 100%;
+    text-align: left;
+  }
+}
