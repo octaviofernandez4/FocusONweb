@@ -2,7 +2,7 @@ const Task = require('../models/Task');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
-const { enviarEmailTareaAsignada } = require('../utils/mailer');
+const { enviarEmailTareaAsignada, enviarEmailAclaracionSolicitada, enviarEmailAclaracionRespondida } = require('../utils/mailer');
 
 // La contraseña de aplicación de Gmail tiene select:false en el modelo — hay
 // que pedirla explícitamente con "+" para poder armar el transporter del mail.
@@ -29,7 +29,7 @@ const inicioDeHoyArgentina = () => {
 // 1. Crear tarea (solo cuenta empresa, ver requireCompanyAccount en la ruta)
 const crearTarea = async (req, res) => {
     try {
-        const { title, description, dueDate, priority, project, assignedToEmail, attachments } = req.body;
+        const { title, description, dueDate, priority, estimatedHours, project, assignedToEmail, attachments } = req.body;
 
         // "project" puede venir como ID crudo o como objeto populado ({_id, name, color});
         // es opcional — una tarea sin proyecto asignado es válida (aparece solo en "Todas").
@@ -54,6 +54,7 @@ const crearTarea = async (req, res) => {
             description,
             dueDate,
             priority,
+            estimatedHours: estimatedHours || null,
             project: proyecto,
             assignedTo,
             attachments: attachments || [],
@@ -137,7 +138,7 @@ const obtenerEstadisticasTareas = async (req, res) => {
 const actualizarTarea = async (req, res) => {
     try {
         const { id } = req.params;
-        const { title, description, dueDate, completed, pendingReview, inProgress, extensionRequested, extensionReason, extensionProposedDate, qualityLevel, completionComment, project, priority, assignedToEmail, attachments } = req.body;
+        const { title, description, dueDate, completed, pendingReview, inProgress, extensionRequested, extensionReason, extensionProposedDate, qualityLevel, completionComment, project, priority, estimatedHours, assignedToEmail, attachments, clarificationRequested, clarificationQuestion, clarificationAnswer } = req.body;
 
         const tarea = await Task.findOne({ _id: id, org: req.orgId });
         if (!tarea) {
@@ -147,12 +148,15 @@ const actualizarTarea = async (req, res) => {
         // Campos que cualquier miembro puede editar libremente
         if (title !== undefined) tarea.title = title;
         if (description !== undefined) tarea.description = description;
+        if (estimatedHours !== undefined) tarea.estimatedHours = estimatedHours || null;
         if (project !== undefined) tarea.project = project && typeof project === 'object' ? project._id : (project || null);
         if (priority !== undefined) tarea.priority = priority;
         if (attachments !== undefined) tarea.attachments = attachments;
 
         const assignedToAnterior = tarea.assignedTo ? String(tarea.assignedTo) : null;
         let miembroReasignado = null;
+        let huboSolicitudDeAclaracion = false;
+        let huboRespuestaDeAclaracion = false;
         if (assignedToEmail !== undefined) {
             if (!assignedToEmail) {
                 tarea.assignedTo = null;
@@ -254,6 +258,35 @@ const actualizarTarea = async (req, res) => {
                 tarea.extensionReason = '';
                 tarea.extensionProposedDate = null;
             }
+        } else if (clarificationRequested !== undefined && clarificationRequested !== tarea.clarificationRequested) {
+            // Pedir una aclaración es cosa de la empresa (mismo criterio que aprobar/reabrir).
+            const solicitante = await User.findById(req.user.id).select('accountType');
+            if (!solicitante || solicitante.accountType !== 'empresa') {
+                return res.status(403).json({ mensaje: 'Solo una cuenta de empresa puede solicitar una aclaración 🛑' });
+            }
+            if (clarificationRequested) {
+                if (!clarificationQuestion || !clarificationQuestion.trim()) {
+                    return res.status(400).json({ mensaje: 'Escribí la pregunta o comentario para la aclaración 🛑' });
+                }
+                tarea.clarificationRequested = true;
+                tarea.clarificationQuestion = clarificationQuestion.trim();
+                tarea.clarificationRequestedAt = new Date();
+                tarea.clarificationAnswer = '';
+                tarea.clarificationAnsweredAt = null;
+                huboSolicitudDeAclaracion = true;
+            } else {
+                tarea.clarificationRequested = false;
+            }
+        } else if (clarificationAnswer !== undefined && clarificationAnswer.trim() && tarea.clarificationRequested) {
+            // Solo la persona asignada puede responder, y solo si hay un pedido activo.
+            const esAsignatario = tarea.assignedTo && tarea.assignedTo.equals(req.user.id);
+            if (!esAsignatario) {
+                return res.status(403).json({ mensaje: 'Solo la persona asignada puede responder la aclaración 🛑' });
+            }
+            tarea.clarificationAnswer = clarificationAnswer.trim();
+            tarea.clarificationAnsweredAt = new Date();
+            tarea.clarificationRequested = false;
+            huboRespuestaDeAclaracion = true;
         }
 
         await tarea.save();
@@ -268,6 +301,34 @@ const actualizarTarea = async (req, res) => {
                 nombreDestinatario: miembroReasignado.name,
                 tituloTarea: tarea.title
             });
+        }
+
+        if (huboSolicitudDeAclaracion && tarea.assignedTo) {
+            const asignado = await User.findById(tarea.assignedTo).select('name email');
+            if (asignado) {
+                const organizacion = await buscarOrgParaNotificar(req.orgId);
+                enviarEmailAclaracionSolicitada({
+                    org: organizacion,
+                    destinatario: asignado.email,
+                    nombreDestinatario: asignado.name,
+                    tituloTarea: tarea.title,
+                    pregunta: tarea.clarificationQuestion
+                });
+            }
+        }
+
+        if (huboRespuestaDeAclaracion) {
+            const creador = await User.findById(tarea.user).select('name email');
+            if (creador) {
+                const organizacion = await buscarOrgParaNotificar(req.orgId);
+                enviarEmailAclaracionRespondida({
+                    org: organizacion,
+                    destinatario: creador.email,
+                    nombreDestinatario: creador.name,
+                    tituloTarea: tarea.title,
+                    respuesta: tarea.clarificationAnswer
+                });
+            }
         }
 
         res.status(200).json({ mensaje: '✏️ Tarea actualizada con éxito', tarea });
@@ -293,6 +354,13 @@ const borrarTarea = async (req, res) => {
         }
 
         await tarea.deleteOne();
+
+        // Si alguien la había descartado de sus notificaciones, ese ID queda
+        // guardado para siempre si no se limpia acá — la tarea ya no existe.
+        await User.updateMany(
+            { dismissedNotifications: tarea._id },
+            { $pull: { dismissedNotifications: tarea._id } }
+        );
 
         res.status(200).json({ mensaje: '🗑️ Tarea eliminada correctamente' });
     } catch (error) {

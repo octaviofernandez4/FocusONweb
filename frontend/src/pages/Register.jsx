@@ -36,7 +36,7 @@ const Register = () => {
       const respuesta = await loginUser({ email: data.email, password: data.password });
       await login(respuesta.token);
 
-      navigate('/app/dashboard');
+      navigate(esEmpresa ? '/onboarding' : '/app/dashboard');
     } catch (error) {
       console.error('Error del backend:', error.response?.data);
       alert(error.response?.data?.mensaje || 'Hubo un error al registrarse');

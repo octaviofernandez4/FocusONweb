@@ -35,7 +35,7 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
 
   useEffect(() => {
     if (isOpen) {
-      reset({ assignedToEmail: '', title: '', description: '', priority: 'medium', dueDate: '', project: defaultProjectId || '' });
+      reset({ assignedToEmail: '', title: '', description: '', priority: 'medium', estimatedHours: '', dueDate: '', project: defaultProjectId || '' });
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setAttachments([]);
       setUploadError('');
@@ -91,6 +91,7 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
         title: data.title,
         description: data.description || undefined,
         priority: data.priority || undefined,
+        estimatedHours: data.estimatedHours ? Number(data.estimatedHours) : undefined,
         // "2026-07-30" a secas se interpreta como medianoche UTC — en Argentina (UTC-3)
         // eso cae en "29/7 21:00" local, o sea "ayer". Le sumamos la hora para que la
         // fecha se arme en horario local y una tarea para hoy quede para hoy.
@@ -140,6 +141,11 @@ const NewTaskModal = ({ isOpen, onClose, onCreated, defaultProjectId }) => {
             <option value="medium">Media</option>
             <option value="high">Alta</option>
           </select>
+        </div>
+
+        <div className="form-group">
+          <label>Tiempo estimado (hrs) — opcional</label>
+          <input type="number" min="0" max="999" step="0.5" placeholder="Ej: 8" {...register('estimatedHours')} />
         </div>
 
         <div className="form-group">

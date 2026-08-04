@@ -1,0 +1,222 @@
+.onboarding-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+}
+
+.onboarding-topbar {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.6rem;
+}
+
+.onboarding-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.onboarding-back:hover {
+  color: var(--text-primary);
+}
+
+.onboarding-skip {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+
+.onboarding-skip:hover {
+  color: var(--text-primary);
+}
+
+.onboarding-steps {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.onboarding-step-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--border-subtle);
+  transition: all 0.2s ease;
+}
+
+.onboarding-step-dot.is-active {
+  width: 26px;
+  background: var(--gradient-brand);
+}
+
+.onboarding-card {
+  background: var(--bg-surface);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-elevated);
+  padding: 2.6rem;
+  width: 100%;
+  max-width: 480px;
+  text-align: center;
+}
+
+.onboarding-icon-cluster {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9rem;
+  margin-bottom: 1.8rem;
+}
+
+.onboarding-icon-side {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.onboarding-icon-main {
+  width: 76px;
+  height: 76px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gradient-brand);
+  box-shadow: 0 10px 24px -8px var(--color-electric-glow);
+}
+
+.onboarding-icon-main img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+}
+
+.onboarding-card h1 {
+  font-size: 1.55rem;
+  margin-bottom: 0.7rem;
+}
+
+.onboarding-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  margin-bottom: 1.8rem;
+}
+
+.onboarding-form {
+  text-align: left;
+}
+
+.onboarding-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  margin: 1rem 0 1.2rem;
+}
+
+.onboarding-divider::before,
+.onboarding-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-subtle);
+}
+
+.onboarding-link-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.onboarding-link-row input {
+  flex: 1;
+  min-width: 0;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 0.8rem;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.onboarding-help-link {
+  display: inline-block;
+  margin-top: 0.4rem;
+  font-size: 0.78rem;
+  color: var(--color-electric-light);
+}
+
+.onboarding-actions {
+  margin-top: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.onboarding-actions .btn-primary,
+.onboarding-actions .btn-ghost {
+  width: 100%;
+  justify-content: center;
+}
+
+.onboarding-success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1.4rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.onboarding-brand {
+  margin-top: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+}
+
+.onboarding-brand img {
+  width: 15px;
+  height: 15px;
+  object-fit: contain;
+}
+
+@media (max-width: 560px) {
+  .onboarding-card {
+    padding: 1.8rem;
+  }
+
+  .onboarding-card h1 {
+    font-size: 1.3rem;
+  }
+}

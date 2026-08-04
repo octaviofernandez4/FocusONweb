@@ -29,6 +29,7 @@ const validarActualizacionPerfil = [
     check('lastname').optional().not().isEmpty().withMessage('El apellido no puede estar vacío'),
     check('statusText').optional().trim(),
     check('avatarUrl').optional({ checkFalsy: true }).isString().withMessage('La foto de perfil no es válida'),
+    check('onboardingCompleted').optional().isBoolean().withMessage('Valor inválido'),
 
     (req, res, next) => {
         const errors = validationResult(req);
@@ -59,6 +60,49 @@ const validarLogin = [
     }
 ];
 
+const validarCambioContrasena = [
+    check('currentPassword', 'La contraseña actual es obligatoria').not().isEmpty(),
+    check('newPassword', 'La contraseña nueva debe tener al menos 6 caracteres').isLength({ min: 6 }),
+
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errores: errors.array() });
+        }
+        next();
+    }
+];
+
+const validarSolicitarReset = [
+    check('email', 'Debe ser un email válido').isEmail().normalizeEmail({
+        gmail_remove_dots: false,
+        gmail_remove_subaddress: false,
+        outlookdotcom_remove_subaddress: false,
+        yahoo_remove_subaddress: false,
+        icloud_remove_subaddress: false
+    }),
+
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errores: errors.array() });
+        }
+        next();
+    }
+];
+
+const validarResetContrasena = [
+    check('newPassword', 'La contraseña nueva debe tener al menos 6 caracteres').isLength({ min: 6 }),
+
+    (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({ errores: errors.array() });
+        }
+        next();
+    }
+];
+
 const validarDescartarNotificacion = [
     check('taskId', 'El ID de la tarea no es válido').isMongoId(),
 
@@ -75,5 +119,8 @@ module.exports = {
     validarRegistro,
     validarLogin,
     validarActualizacionPerfil,
+    validarCambioContrasena,
+    validarSolicitarReset,
+    validarResetContrasena,
     validarDescartarNotificacion
 };
