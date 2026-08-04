@@ -59,6 +59,25 @@
   color: var(--color-electric-light);
 }
 
+.settings-notif-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--color-warning);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 0.7rem 0.9rem;
+  margin-bottom: 1.1rem;
+}
+
+.settings-notif-warning svg {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+}
+
 .settings-form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -75,6 +94,7 @@
 .settings-notif-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.8rem;
 }
 

@@ -172,6 +172,15 @@ body {
   cursor: not-allowed;
 }
 
+.label-row-link {
+  font-size: 0.78rem;
+  color: var(--color-electric-light);
+}
+
+.label-row-link:hover {
+  color: var(--text-primary);
+}
+
 .link-disabled-btn {
   background: none;
   border: none;

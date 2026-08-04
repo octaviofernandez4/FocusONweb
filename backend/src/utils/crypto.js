@@ -2,14 +2,15 @@ const crypto = require('crypto');
 
 const ALGORITMO = 'aes-256-gcm';
 
-// Derivamos la clave de encriptación del mismo JWT_SECRET que ya usa toda la
-// app (con un contexto distinto para no reusar la clave cruda), así no hace
-// falta pedirle al usuario un secreto más en el .env.
+// Clave PROPIA para encriptar credenciales (contraseñas de aplicación de Gmail),
+// separada del JWT_SECRET a propósito: si alguna vez rotás el JWT_SECRET (por
+// seguridad, por migración), no queremos que de paso se vuelvan indescifrables
+// TODAS las contraseñas ya guardadas de TODAS las organizaciones.
 const getKey = () => {
-    if (!process.env.JWT_SECRET) {
-        throw new Error('Falta JWT_SECRET en las variables de entorno');
+    if (!process.env.CREDENTIALS_ENCRYPTION_KEY) {
+        throw new Error('Falta CREDENTIALS_ENCRYPTION_KEY en las variables de entorno');
     }
-    return crypto.createHash('sha256').update(`${process.env.JWT_SECRET}:org-credentials`).digest();
+    return crypto.createHash('sha256').update(process.env.CREDENTIALS_ENCRYPTION_KEY).digest();
 };
 
 // Encripta un texto plano (ej. una contraseña de aplicación de Gmail) para guardarlo en la base.

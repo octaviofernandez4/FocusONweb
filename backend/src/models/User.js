@@ -52,6 +52,27 @@ const userSchema = new mongoose.Schema({
     dismissedNotifications: {
         type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Task' }],
         default: []
+    },
+    // Solo importa para cuentas "empresa" recién registradas (sin invitación) —
+    // controla si ya pasaron por el wizard de bienvenida (crear proyecto,
+    // invitar equipo, configurar email). Default true a propósito: así las
+    // cuentas que ya existían antes de este campo nunca ven el wizard de la
+    // nada; se pone en false explícitamente solo al crear una cuenta nueva.
+    onboardingCompleted: {
+        type: Boolean,
+        default: true
+    },
+    // Recuperación de contraseña — el token vale 1 hora y se limpia solo al
+    // usarse (o al pedir uno nuevo, que reemplaza al anterior).
+    passwordResetToken: {
+        type: String,
+        default: null,
+        select: false
+    },
+    passwordResetTokenExpiresAt: {
+        type: Date,
+        default: null,
+        select: false
     }
 }, {
     // Esto es un toque pro: agrega automáticamente la fecha de creación y actualización
