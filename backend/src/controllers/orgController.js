@@ -3,7 +3,7 @@ const Organization = require('../models/Organization');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
 const { encrypt } = require('../utils/crypto');
-const { enviarEmailInvitacion } = require('../utils/mailer');
+const { enviarEmailInvitacion, enviarEmailPrueba } = require('../utils/mailer');
 const Task = require('../models/Task');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -35,12 +35,13 @@ const obtenerOrganizacionActual = async (req, res) => {
 // 2. Renombrar la organización y/o cambiar su logo/rubro/dirección/email de notificaciones (solo admin)
 const actualizarOrganizacion = async (req, res) => {
     try {
-        const { name, logoUrl, industry, address, notificationEmail, notificationEmailAppPassword } = req.body;
+        const { name, logoUrl, industry, address, taxId, notificationEmail, notificationEmailAppPassword } = req.body;
 
         const datosAActualizar = { name };
         if (logoUrl !== undefined) datosAActualizar.logoUrl = logoUrl;
         if (industry !== undefined) datosAActualizar.industry = industry;
         if (address !== undefined) datosAActualizar.address = address;
+        if (taxId !== undefined) datosAActualizar.taxId = taxId;
         if (notificationEmail !== undefined) datosAActualizar.notificationEmail = notificationEmail || null;
         if (notificationEmailAppPassword !== undefined) {
             // Contraseña vacía = el admin quiere desactivar el envío de emails.
@@ -108,7 +109,18 @@ const eliminarMiembro = async (req, res) => {
         // Eliminar a alguien es la forma que tiene la empresa de "despedirlo" o
         // dar de baja a quien decidió irse — sus tareas se eliminan con él en
         // vez de quedar huérfanas, para que quede claro que hay que reasignarlas.
-        await Task.deleteMany({ org: req.orgId, assignedTo: userId });
+        const tareasAEliminar = await Task.find({ org: req.orgId, assignedTo: userId }).select('_id');
+        const idsTareasEliminadas = tareasAEliminar.map((t) => t._id);
+        await Task.deleteMany({ _id: { $in: idsTareasEliminadas } });
+
+        // Si alguien había descartado alguna de esas tareas de sus notificaciones,
+        // ese ID queda guardado para siempre si no se limpia acá.
+        if (idsTareasEliminadas.length > 0) {
+            await User.updateMany(
+                { dismissedNotifications: { $in: idsTareasEliminadas } },
+                { $pull: { dismissedNotifications: { $in: idsTareasEliminadas } } }
+            );
+        }
 
         // Si esa era su organización activa, se queda sin organización (mismo
         // estado que ya contempla orgMiddleware) hasta que se una a otra.
@@ -177,7 +189,31 @@ const generarInvitacion = async (req, res) => {
     }
 };
 
-// 6. Unirse a una organización mediante un token de invitación
+// 6. Mandar un email de prueba a la propia cuenta configurada (solo admin) —
+// para verificar la config sin depender de que se dispare en un flujo real.
+const probarEmailNotificaciones = async (req, res) => {
+    try {
+        const organizacion = await Organization.findById(req.orgId).select('name notificationEmail +notificationEmailAppPasswordEnc');
+
+        if (!organizacion?.notificationEmail) {
+            return res.status(400).json({ mensaje: 'Todavía no configuraste el email de notificaciones de tu empresa.' });
+        }
+
+        try {
+            await enviarEmailPrueba({ org: organizacion });
+        } catch (errorEmail) {
+            console.error('Error al enviar el email de prueba:', errorEmail);
+            return res.status(502).json({ mensaje: `No se pudo enviar el email de prueba: ${errorEmail.message}` });
+        }
+
+        res.status(200).json({ mensaje: `📧 Te mandamos un email de prueba a ${organizacion.notificationEmail}` });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ mensaje: 'Error al enviar el email de prueba', error: error.message });
+    }
+};
+
+// 7. Unirse a una organización mediante un token de invitación
 const unirseAOrganizacion = async (req, res) => {
     try {
         const { token } = req.params;
@@ -213,5 +249,6 @@ module.exports = {
     listarMiembros,
     eliminarMiembro,
     generarInvitacion,
+    probarEmailNotificaciones,
     unirseAOrganizacion
 };

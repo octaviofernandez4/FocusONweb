@@ -7,6 +7,7 @@ const {
     listarMiembros,
     eliminarMiembro,
     generarInvitacion,
+    probarEmailNotificaciones,
     unirseAOrganizacion
 } = require('../controllers/orgController');
 
@@ -23,6 +24,7 @@ router.put('/me', authMiddleware, orgMiddleware, requireOrgAdmin, validarOrganiz
 router.get('/me/members', authMiddleware, orgMiddleware, listarMiembros);
 router.delete('/me/members/:userId', authMiddleware, orgMiddleware, requireCompanyAccount, requireOrgAdmin, eliminarMiembro);
 router.post('/me/invite', authMiddleware, orgMiddleware, requireCompanyAccount, requireOrgAdmin, generarInvitacion);
+router.post('/me/test-email', authMiddleware, orgMiddleware, requireCompanyAccount, requireOrgAdmin, probarEmailNotificaciones);
 
 // Unirse a una organización distinta mediante un link de invitación
 router.post('/join/:token', authMiddleware, unirseAOrganizacion);

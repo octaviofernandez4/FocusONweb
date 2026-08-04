@@ -47,6 +47,7 @@ const TeamManagement = () => {
   const [menuAbiertoId, setMenuAbiertoId] = useState(null);
   const [miembroAEliminar, setMiembroAEliminar] = useState(null);
   const [eliminando, setEliminando] = useState(false);
+  const [confirmacionTexto, setConfirmacionTexto] = useState('');
   const menuRef = useRef(null);
 
   const cargarDatos = useCallback(async () => {
@@ -199,6 +200,7 @@ const TeamManagement = () => {
     try {
       await removeMember(miembroAEliminar.id);
       setMiembroAEliminar(null);
+      setConfirmacionTexto('');
       // Eliminarlo también borra sus tareas del lado del servidor — recargamos
       // todo (miembros, tareas y tasa de cumplimiento) para que quede consistente.
       await cargarDatos();
@@ -341,6 +343,7 @@ const TeamManagement = () => {
                               className="team-actions-menu-item is-danger"
                               onClick={() => {
                                 setMenuAbiertoId(null);
+                                setConfirmacionTexto('');
                                 setMiembroAEliminar(m);
                               }}
                             >
@@ -458,7 +461,11 @@ const TeamManagement = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={!!miembroAEliminar} onClose={() => setMiembroAEliminar(null)} title="Eliminar miembro">
+      <Modal
+        isOpen={!!miembroAEliminar}
+        onClose={() => { setMiembroAEliminar(null); setConfirmacionTexto(''); }}
+        title="Eliminar miembro"
+      >
         <div className="confirm-danger">
           <div className="confirm-danger-icon"><AlertTriangle size={24} /></div>
           <h3>¿Eliminar a este miembro?</h3>
@@ -467,14 +474,36 @@ const TeamManagement = () => {
             la organización? Esta acción no se puede deshacer.
           </p>
           {miembroAEliminar?.totalTareas > 0 && (
-            <p>
-              Tiene <strong>{miembroAEliminar.totalTareas}</strong> tarea{miembroAEliminar.totalTareas === 1 ? '' : 's'} asignada
-              {miembroAEliminar.totalTareas === 1 ? '' : 's'} — se {miembroAEliminar.totalTareas === 1 ? 'eliminará' : 'eliminarán'} también.
-            </p>
+            <>
+              <p>
+                Tiene <strong>{miembroAEliminar.totalTareas}</strong> tarea{miembroAEliminar.totalTareas === 1 ? '' : 's'} asignada
+                {miembroAEliminar.totalTareas === 1 ? '' : 's'} — se {miembroAEliminar.totalTareas === 1 ? 'eliminará' : 'eliminarán'} también.
+              </p>
+              <p className="confirm-danger-typecheck-label">
+                Escribí <strong>{miembroAEliminar.name} {miembroAEliminar.lastname}</strong> para confirmar:
+              </p>
+              <input
+                type="text"
+                className="confirm-danger-typecheck-input"
+                value={confirmacionTexto}
+                onChange={(e) => setConfirmacionTexto(e.target.value)}
+                autoComplete="off"
+              />
+            </>
           )}
           <div className="confirm-danger-actions">
-            <button className="btn-ghost" onClick={() => setMiembroAEliminar(null)} disabled={eliminando}>Cancelar</button>
-            <button className="btn-danger" onClick={confirmarEliminar} disabled={eliminando}>
+            <button className="btn-ghost" onClick={() => { setMiembroAEliminar(null); setConfirmacionTexto(''); }} disabled={eliminando}>
+              Cancelar
+            </button>
+            <button
+              className="btn-danger"
+              onClick={confirmarEliminar}
+              disabled={
+                eliminando ||
+                (miembroAEliminar?.totalTareas > 0 &&
+                  confirmacionTexto.trim().toLowerCase() !== `${miembroAEliminar.name} ${miembroAEliminar.lastname}`.trim().toLowerCase())
+              }
+            >
               {eliminando ? 'Eliminando…' : 'Eliminar miembro'}
             </button>
           </div>

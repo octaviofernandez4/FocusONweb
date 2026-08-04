@@ -25,6 +25,11 @@ export const generateInvite = async (email) => {
   return response.data;
 };
 
+export const sendTestEmail = async () => {
+  const response = await api.post('/orgs/me/test-email');
+  return response.data;
+};
+
 export const joinOrg = async (token) => {
   const response = await api.post(`/orgs/join/${token}`);
   return response.data;

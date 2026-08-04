@@ -29,6 +29,11 @@ const organizationSchema = new mongoose.Schema({
         default: '',
         trim: true
     },
+    taxId: {
+        type: String,
+        default: '',
+        trim: true
+    },
     // Gmail de la empresa desde la que salen los emails automáticos (ej. "te
     // asignaron una tarea"). La contraseña de aplicación queda encriptada y
     // con select:false — nunca se devuelve en una consulta normal.
@@ -42,6 +47,18 @@ const organizationSchema = new mongoose.Schema({
         type: String,
         default: null,
         select: false
+    },
+    // Último error al mandar un email automático (asignación, invitación o
+    // prueba) — si no, esos envíos fallan en silencio y nadie se entera hasta
+    // que un empleado dice que nunca le llegó nada. Se limpia solo en el
+    // próximo envío exitoso.
+    notificationEmailLastError: {
+        type: String,
+        default: null
+    },
+    notificationEmailLastErrorAt: {
+        type: Date,
+        default: null
     },
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
