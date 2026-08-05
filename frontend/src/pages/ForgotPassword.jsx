@@ -2,9 +2,11 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, CheckCircle2 } from 'lucide-react';
 import { forgotPassword } from '../services/authService';
+import { usePageTitle } from '../hooks/usePageTitle';
 import BackHomeButton from '../components/BackHomeButton';
 
 const ForgotPassword = () => {
+  usePageTitle('Recuperar contraseña');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [enviado, setEnviado] = useState(false);

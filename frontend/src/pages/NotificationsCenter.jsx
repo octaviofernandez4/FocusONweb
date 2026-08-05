@@ -4,6 +4,7 @@ import { UserRoundPlus, CheckCircle2, Trash2 } from 'lucide-react';
 import { getTasks } from '../services/taskService';
 import { dismissNotification } from '../services/profileService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { construirNotificaciones, formatRelativo } from '../utils/notifications';
 import ReassignTaskModal from '../components/ReassignTaskModal';
 import './NotificationsCenter.css';
@@ -17,6 +18,7 @@ const TABS = [
 // Página completa detrás del "Ver todas las notificaciones" del dropdown de la campanita.
 // Misma fuente de datos que NotificationsPanel (utils/notifications) para no duplicar lógica.
 const NotificationsCenter = () => {
+  usePageTitle('Notificaciones');
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
   const navigate = useNavigate();

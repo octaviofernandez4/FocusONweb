@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Navigate } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Rocket, Mail, Lock, Check, Copy, Send } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { createProject } from '../services/projectService';
 import { getCurrentOrg, generateInvite, updateOrg } from '../services/orgService';
 import { updateProfile } from '../services/profileService';
@@ -19,6 +20,7 @@ const TOTAL_PASOS = 5;
 const Onboarding = () => {
   const { user, refreshProfile } = useAuth();
   const navigate = useNavigate();
+  usePageTitle('Bienvenida');
 
   const [paso, setPaso] = useState(1);
   const [org, setOrg] = useState(null);

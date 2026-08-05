@@ -5,6 +5,7 @@ import { getTasks, getTaskStats, updateTask } from '../services/taskService';
 import { listMembers } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { isSameLocalDay } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import NewTaskModal from '../components/NewTaskModal';
@@ -22,6 +23,7 @@ const formatFechaHoy = () => {
 const NOMBRES_DIA = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 
 const Dashboard = () => {
+  usePageTitle('Dashboard');
   const { user } = useAuth();
   const { projects } = useOrg();
   const navigate = useNavigate();

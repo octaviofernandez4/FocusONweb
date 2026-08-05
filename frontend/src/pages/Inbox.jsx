@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { Search, Plus, FileDown, ChevronLeft, ChevronRight } from 'lucide-react';
 import { getTasks, getTaskStats, updateTask, deleteTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { getTaskAccess, getEstado, ESTADO_LABEL } from '../utils/taskAccess';
 import { isMissed } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
@@ -16,6 +17,7 @@ const PAGE_SIZE = 8;
 // El buscador filtra por título de tarea o por nombre de proyecto, y al hacer clic
 // despliega accesos rápidos: "Mis tareas" y los departamentos que tienen tareas.
 const Inbox = () => {
+  usePageTitle('Tareas del Equipo');
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
   const searchWrapRef = useRef(null);

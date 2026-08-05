@@ -4,6 +4,7 @@ import { Lock } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { isMissed, isSameLocalDay } from '../utils/dateHelpers';
 import ConfirmMarkReadyModal from '../components/ConfirmMarkReadyModal';
 import AlertModal from '../components/AlertModal';
@@ -13,6 +14,7 @@ import './MyTasks.css';
 // "Mis tareas" — solo la cuenta empleado la ve en el sidebar. Muestra únicamente
 // las tareas asignadas a mí; el tilde marca "lista para revisión" (nunca confirma).
 const MyTasks = () => {
+  usePageTitle('Mis Tareas');
   const { user } = useAuth();
   const { projects } = useOrg();
   const navigate = useNavigate();

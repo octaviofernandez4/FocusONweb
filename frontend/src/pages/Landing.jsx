@@ -24,6 +24,7 @@ import {
   X,
 } from 'lucide-react';
 import logo from '../assets/focusonweb-logo.png';
+import { usePageTitle } from '../hooks/usePageTitle';
 import './Landing.css';
 
 const DEPT_COLORS = {
@@ -205,6 +206,7 @@ const TaskChip = ({ task }) => (
 );
 
 const Landing = () => {
+  usePageTitle();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const closeMenu = () => setIsMenuOpen(false);

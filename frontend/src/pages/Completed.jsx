@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getTasks, getTaskStats } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { isSameLocalDay } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import TaskHistoryRow from '../components/TaskHistoryRow';
@@ -17,6 +18,7 @@ const groupLabel = (fecha) => {
 };
 
 const Completed = () => {
+  usePageTitle('Completadas');
   const [tasks, setTasks] = useState([]);
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);

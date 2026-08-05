@@ -6,6 +6,7 @@ import { z } from 'zod';
 import { Pencil, Loader2, Building2, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { updateProfile } from '../services/profileService';
 import { uploadFile } from '../services/uploadService';
 import { updateOrg, listMembers, sendTestEmail } from '../services/orgService';
@@ -27,6 +28,7 @@ const getInitials = (name, lastname) => `${name?.[0] || ''}${lastname?.[0] || ''
 const proximamente = (que) => alert(`Próximamente: ${que}`);
 
 const Settings = () => {
+  usePageTitle('Configuración');
   const { user, refreshProfile } = useAuth();
   const { org, isAdmin, projects, refreshOrg } = useOrg();
   // Los ajustes de empresa y de empleado son paneles completamente distintos,

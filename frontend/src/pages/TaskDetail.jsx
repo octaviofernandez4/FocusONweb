@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Paperclip, FileText, Clock, HelpCircle, CheckCircle2, User, CalendarDays, FolderOpen, AlertTriangle, RotateCcw, Hourglass } from 'lucide-react';
 import { getTasks, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { getTaskAccess, ESTADO_LABEL, PRIORIDAD_LABEL } from '../utils/taskAccess';
 import { formatTamanio } from '../utils/fileSize';
 import ReopenTaskModal from '../components/ReopenTaskModal';
@@ -61,6 +62,7 @@ const TaskDetail = () => {
   const { user } = useAuth();
 
   const [task, setTask] = useState(location.state?.task || null);
+  usePageTitle(task?.title || 'Detalle de Tarea');
   const [isLoading, setIsLoading] = useState(!location.state?.task);
   const [modalReabrirAbierto, setModalReabrirAbierto] = useState(false);
   const [modalAprobarAbierto, setModalAprobarAbierto] = useState(false);

@@ -6,10 +6,12 @@ import { loginSchema } from '../schemas/authSchema';
 import { loginUser } from '../services/authService';
 import { joinOrg } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import PasswordField from '../components/PasswordField';
 import BackHomeButton from '../components/BackHomeButton';
 
 const Login = () => {
+  usePageTitle('Iniciar sesión');
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm({
     resolver: zodResolver(loginSchema)
   });

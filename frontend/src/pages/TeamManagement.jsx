@@ -4,6 +4,7 @@ import { UserPlus, Users, Building2, CheckCircle2, Link2, Copy, Check, ChevronLe
 import { listMembers, removeMember, generateInvite } from '../services/orgService';
 import { getTasks, getTaskStats } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import Modal from '../components/Modal';
 import './TeamManagement.css';
 
@@ -26,6 +27,7 @@ const rendimientoTono = (pct) => {
 // "Activo" porque no hay seguimiento de presencia — son los próximos huecos
 // a resolver a medida que se necesiten.
 const TeamManagement = () => {
+  usePageTitle('Gestión de Equipo');
   const { user } = useAuth();
   const navigate = useNavigate();
   const esEmpresa = user?.accountType === 'empresa';

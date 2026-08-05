@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { joinOrg } from '../services/orgService';
+import { usePageTitle } from '../hooks/usePageTitle';
 
 // Controlador delgado: si ya hay sesión, se une directo a la organización;
 // si no, manda a Registro (o Login) pasando el token de invitación.
 const JoinInvite = () => {
+  usePageTitle('Unirte al equipo');
   const { token } = useParams();
   const navigate = useNavigate();
   const [error, setError] = useState(null);

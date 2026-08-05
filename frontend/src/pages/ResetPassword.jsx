@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2 } from 'lucide-react';
 import { resetPassword } from '../services/authService';
+import { usePageTitle } from '../hooks/usePageTitle';
 import PasswordField from '../components/PasswordField';
 import BackHomeButton from '../components/BackHomeButton';
 
 const ResetPassword = () => {
+  usePageTitle('Restablecer contraseña');
   const { token } = useParams();
   const navigate = useNavigate();
 

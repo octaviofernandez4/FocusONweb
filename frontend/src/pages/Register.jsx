@@ -6,6 +6,7 @@ import { User, Mail, Building2, UserRound, CheckCircle2, ArrowRight } from 'luci
 import { registerSchema } from '../schemas/authSchema';
 import { registerUser, loginUser } from '../services/authService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import PasswordField from '../components/PasswordField';
 import BackHomeButton from '../components/BackHomeButton';
 import buildingPhoto from '../assets/pexels-wellingtonsilva-14589851.jpg';
@@ -20,6 +21,7 @@ const Register = () => {
   const { login } = useAuth();
   const [searchParams] = useSearchParams();
   const inviteToken = searchParams.get('invite');
+  usePageTitle(inviteToken ? 'Unite al equipo' : 'Creá tu espacio de trabajo');
 
   // Elegí si te registrás como empresa (creás tu organización) o como empleado.
   // El dashboard post-login ya se adapta solo según el rol real (admin/miembro),

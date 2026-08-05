@@ -6,6 +6,7 @@ import { deleteProject } from '../services/projectService';
 import { listMembers } from '../services/orgService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { getProjectColor } from '../utils/projectColors';
 import { getEstado } from '../utils/taskAccess';
 import { isMissed } from '../utils/dateHelpers';
@@ -72,6 +73,7 @@ const BoardColumn = ({ label, dotClass, count, tasks, onDropTask, emptyDropHint,
 // progreso" (equivale a "marcar como lista", con la misma confirmación que en
 // Mis tareas). El resto de las transiciones se hacen desde el detalle de tarea.
 const Projects = () => {
+  usePageTitle('Proyectos');
   const { user } = useAuth();
   const { isAdmin, projects, refreshOrg } = useOrg();
   const esEmpresa = user?.accountType === 'empresa';

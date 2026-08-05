@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getTasks, getTaskStats, updateTask } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
+import { usePageTitle } from '../hooks/usePageTitle';
 import { isSameLocalDay, isMissed } from '../utils/dateHelpers';
 import StatCard from '../components/StatCard';
 import TaskHistoryRow from '../components/TaskHistoryRow';
@@ -19,6 +20,7 @@ const groupLabel = (fecha) => {
 // "Incompletas" — tareas vencidas sin completar, separadas de "Completadas".
 // El asignado puede pedir más tiempo; la empresa puede ponerle una nueva fecha.
 const Incomplete = () => {
+  usePageTitle('Incompletas');
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
   const [tasks, setTasks] = useState([]);

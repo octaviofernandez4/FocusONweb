@@ -2,10 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { getTaskStats } from '../services/taskService';
 import { useAuth } from '../hooks/useAuth';
 import { useOrg } from '../hooks/useOrg';
+import { usePageTitle } from '../hooks/usePageTitle';
 import StatCard from '../components/StatCard';
 import './Analytics.css';
 
 const Analytics = () => {
+  usePageTitle('Analíticas');
   const { projects } = useOrg();
   const { user } = useAuth();
   const esEmpresa = user?.accountType === 'empresa';
