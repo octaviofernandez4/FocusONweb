@@ -79,7 +79,8 @@ const loginUsuario = async (req, res) => {
         const { email, password } = req.body;
 
         // 1. Verificamos si existe alguien con ese email
-        const usuario = await User.findOne({ email });
+        // password tiene select:false en el modelo — hay que pedirlo explícitamente para poder compararlo.
+        const usuario = await User.findOne({ email }).select('+password');
         if (!usuario) {
             return res.status(400).json({ mensaje: 'Credenciales inválidas (email no encontrado)' });
         }
@@ -154,7 +155,7 @@ const cambiarContrasena = async (req, res) => {
     try {
         const { currentPassword, newPassword } = req.body;
 
-        const usuario = await User.findById(req.user.id);
+        const usuario = await User.findById(req.user.id).select('+password');
         if (!usuario) {
             return res.status(404).json({ mensaje: 'Usuario no encontrado' });
         }
