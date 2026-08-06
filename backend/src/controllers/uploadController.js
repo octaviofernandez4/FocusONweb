@@ -1,4 +1,5 @@
 const cloudinary = require('../config/cloudinary');
+const { detalleError } = require('../utils/errorResponse');
 
 // Sube un archivo (imagen o PDF) a Cloudinary y devuelve su metadata para
 // guardarla en el array `attachments` de una tarea.
@@ -24,7 +25,7 @@ const subirArchivo = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al subir el archivo', error: error.message });
+        res.status(500).json({ mensaje: 'Error al subir el archivo', error: detalleError(error) });
     }
 };
 

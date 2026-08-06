@@ -4,6 +4,7 @@ const Membership = require('../models/Membership');
 const User = require('../models/User');
 const { encrypt } = require('../utils/crypto');
 const { enviarEmailInvitacion, enviarEmailPrueba } = require('../utils/mailer');
+const { detalleError } = require('../utils/errorResponse');
 const Task = require('../models/Task');
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -28,7 +29,7 @@ const obtenerOrganizacionActual = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al obtener la organización', error: error.message });
+        res.status(500).json({ mensaje: 'Error al obtener la organización', error: detalleError(error) });
     }
 };
 
@@ -59,7 +60,7 @@ const actualizarOrganizacion = async (req, res) => {
         res.status(200).json({ mensaje: '✏️ Organización actualizada', organizacion });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al actualizar la organización', error: error.message });
+        res.status(500).json({ mensaje: 'Error al actualizar la organización', error: detalleError(error) });
     }
 };
 
@@ -79,7 +80,7 @@ const listarMiembros = async (req, res) => {
         })));
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al listar los miembros', error: error.message });
+        res.status(500).json({ mensaje: 'Error al listar los miembros', error: detalleError(error) });
     }
 };
 
@@ -129,7 +130,7 @@ const eliminarMiembro = async (req, res) => {
         res.status(200).json({ mensaje: 'Miembro eliminado de la organización' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al eliminar al miembro', error: error.message });
+        res.status(500).json({ mensaje: 'Error al eliminar al miembro', error: detalleError(error) });
     }
 };
 
@@ -185,7 +186,7 @@ const generarInvitacion = async (req, res) => {
         });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al generar la invitación', error: error.message });
+        res.status(500).json({ mensaje: 'Error al generar la invitación', error: detalleError(error) });
     }
 };
 
@@ -209,7 +210,7 @@ const probarEmailNotificaciones = async (req, res) => {
         res.status(200).json({ mensaje: `📧 Te mandamos un email de prueba a ${organizacion.notificationEmail}` });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al enviar el email de prueba', error: error.message });
+        res.status(500).json({ mensaje: 'Error al enviar el email de prueba', error: detalleError(error) });
     }
 };
 
@@ -239,7 +240,7 @@ const unirseAOrganizacion = async (req, res) => {
         res.status(200).json({ mensaje: `🎉 Te uniste a ${organizacion.name}`, organizacion });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al unirse a la organización', error: error.message });
+        res.status(500).json({ mensaje: 'Error al unirse a la organización', error: detalleError(error) });
     }
 };
 

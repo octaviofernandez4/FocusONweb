@@ -5,8 +5,19 @@ const Membership = require('../models/Membership');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { enviarEmailResetContrasena } = require('../utils/mailer');
+const { detalleError } = require('../utils/errorResponse');
 
 const UNA_HORA_MS = 60 * 60 * 1000;
+
+// El token de reset se manda por email tal cual, pero en la DB solo guardamos
+// su hash — si algún día se filtra un dump de la base, esos hashes no sirven
+// para restablecer ninguna contraseña sin conocer el token original.
+const hashTokenReset = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+// Hash fijo contra el que comparamos cuando el email no existe, para que
+// bcrypt.compare corra igual en ambos casos y el tiempo de respuesta no
+// delate si el email está registrado.
+const HASH_SEÑUELO = bcrypt.hashSync('esto-no-es-una-contraseña-real', 10);
 
 // 1. Registrar un nuevo usuario (ahora con contraseña encriptada)
 const crearUsuario = async (req, res) => {
@@ -20,7 +31,7 @@ const crearUsuario = async (req, res) => {
         }
 
         // Magia de bcrypt: Hasheamos (encriptamos) la contraseña
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(12);
         const passwordHasheada = await bcrypt.hash(password, salt);
 
         // Armamos el usuario PERO le pasamos la contraseña encriptada
@@ -69,7 +80,7 @@ const crearUsuario = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al crear el usuario', error: error.message });
+        res.status(500).json({ mensaje: 'Error al crear el usuario', error: detalleError(error) });
     }
 };
 
@@ -81,16 +92,13 @@ const loginUsuario = async (req, res) => {
         // 1. Verificamos si existe alguien con ese email
         // password tiene select:false en el modelo — hay que pedirlo explícitamente para poder compararlo.
         const usuario = await User.findOne({ email }).select('+password');
-        // Mismo mensaje tanto si el email no existe como si la contraseña está mal —
-        // si distinguimos, cualquiera podría usar el login para adivinar qué emails
-        // están registrados probando uno por uno.
-        if (!usuario) {
-            return res.status(400).json({ mensaje: 'Credenciales inválidas' });
-        }
 
-        // 2. Comparamos la contraseña que tipeó con el hash guardado en MongoDB
-        const passwordCorrecta = await bcrypt.compare(password, usuario.password);
-        if (!passwordCorrecta) {
+        // 2. Comparamos SIEMPRE contra un hash (real o señuelo) — si distinguimos
+        // por tiempo de respuesta (saltear bcrypt.compare cuando el usuario no
+        // existe), cualquiera podría usar el login para adivinar qué emails
+        // están registrados midiendo cuánto tarda en responder.
+        const passwordCorrecta = await bcrypt.compare(password, usuario ? usuario.password : HASH_SEÑUELO);
+        if (!usuario || !passwordCorrecta) {
             return res.status(400).json({ mensaje: 'Credenciales inválidas' });
         }
 
@@ -98,7 +106,7 @@ const loginUsuario = async (req, res) => {
         const token = jwt.sign(
             { id: usuario._id }, // Guardamos el ID del usuario oculto adentro del token
             process.env.JWT_SECRET, // Firmamos con tu secreto del .env
-            { expiresIn: '2h' } // Le damos 2 horas de validez
+            { expiresIn: '2h', algorithm: 'HS256' } // Le damos 2 horas de validez
         );
 
         res.status(200).json({ 
@@ -109,7 +117,7 @@ const loginUsuario = async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al iniciar sesión', error: error.message });
+        res.status(500).json({ mensaje: 'Error al iniciar sesión', error: detalleError(error) });
     }
 };
 
@@ -125,7 +133,7 @@ const obtenerPerfil = async (req, res) => {
         res.status(200).json(usuario);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al obtener el perfil', error: error.message });
+        res.status(500).json({ mensaje: 'Error al obtener el perfil', error: detalleError(error) });
     }
 };
 
@@ -149,7 +157,7 @@ const actualizarPerfil = async (req, res) => {
         res.status(200).json({ mensaje: '✏️ Perfil actualizado', usuario: usuarioActualizado });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al actualizar el perfil', error: error.message });
+        res.status(500).json({ mensaje: 'Error al actualizar el perfil', error: detalleError(error) });
     }
 };
 
@@ -168,14 +176,14 @@ const cambiarContrasena = async (req, res) => {
             return res.status(400).json({ mensaje: 'La contraseña actual no es correcta' });
         }
 
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(12);
         usuario.password = await bcrypt.hash(newPassword, salt);
         await usuario.save();
 
         res.status(200).json({ mensaje: '🔒 Contraseña actualizada' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al cambiar la contraseña', error: error.message });
+        res.status(500).json({ mensaje: 'Error al cambiar la contraseña', error: detalleError(error) });
     }
 };
 
@@ -194,7 +202,7 @@ const solicitarResetContrasena = async (req, res) => {
         }
 
         const resetToken = crypto.randomBytes(32).toString('hex');
-        usuario.passwordResetToken = resetToken;
+        usuario.passwordResetToken = hashTokenReset(resetToken);
         usuario.passwordResetTokenExpiresAt = new Date(Date.now() + UNA_HORA_MS);
         await usuario.save();
 
@@ -206,7 +214,7 @@ const solicitarResetContrasena = async (req, res) => {
         res.status(200).json(RESPUESTA_GENERICA_RESET);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al solicitar la recuperación de contraseña', error: error.message });
+        res.status(500).json({ mensaje: 'Error al solicitar la recuperación de contraseña', error: detalleError(error) });
     }
 };
 
@@ -217,7 +225,7 @@ const resetearContrasena = async (req, res) => {
         const { newPassword } = req.body;
 
         const usuario = await User.findOne({
-            passwordResetToken: token,
+            passwordResetToken: hashTokenReset(token),
             passwordResetTokenExpiresAt: { $gt: new Date() }
         }).select('+passwordResetToken +passwordResetTokenExpiresAt');
 
@@ -225,7 +233,7 @@ const resetearContrasena = async (req, res) => {
             return res.status(400).json({ mensaje: 'El link de recuperación no es válido o ya venció. Pedí uno nuevo.' });
         }
 
-        const salt = await bcrypt.genSalt(10);
+        const salt = await bcrypt.genSalt(12);
         usuario.password = await bcrypt.hash(newPassword, salt);
         usuario.passwordResetToken = null;
         usuario.passwordResetTokenExpiresAt = null;
@@ -234,7 +242,7 @@ const resetearContrasena = async (req, res) => {
         res.status(200).json({ mensaje: '🔒 Contraseña restablecida — ya podés iniciar sesión' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al restablecer la contraseña', error: error.message });
+        res.status(500).json({ mensaje: 'Error al restablecer la contraseña', error: detalleError(error) });
     }
 };
 
@@ -257,7 +265,7 @@ const descartarNotificacion = async (req, res) => {
         res.status(200).json({ mensaje: '🔕 Notificación descartada', dismissedNotifications: usuario.dismissedNotifications });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al descartar la notificación', error: error.message });
+        res.status(500).json({ mensaje: 'Error al descartar la notificación', error: detalleError(error) });
     }
 };
 

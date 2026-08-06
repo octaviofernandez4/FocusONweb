@@ -1,5 +1,6 @@
 const Project = require('../models/Project');
 const Task = require('../models/Task');
+const { detalleError } = require('../utils/errorResponse');
 
 // 1. Obtener los proyectos de la organización activa
 const obtenerProyectos = async (req, res) => {
@@ -8,7 +9,7 @@ const obtenerProyectos = async (req, res) => {
         res.status(200).json(proyectos);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al obtener los proyectos', error: error.message });
+        res.status(500).json({ mensaje: 'Error al obtener los proyectos', error: detalleError(error) });
     }
 };
 
@@ -28,7 +29,7 @@ const crearProyecto = async (req, res) => {
         res.status(201).json({ mensaje: '✅ Proyecto creado con éxito', proyecto: nuevoProyecto });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al crear el proyecto', error: error.message });
+        res.status(500).json({ mensaje: 'Error al crear el proyecto', error: detalleError(error) });
     }
 };
 
@@ -51,7 +52,7 @@ const actualizarProyecto = async (req, res) => {
         res.status(200).json({ mensaje: '✏️ Proyecto actualizado', proyecto: proyectoActualizado });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al actualizar el proyecto', error: error.message });
+        res.status(500).json({ mensaje: 'Error al actualizar el proyecto', error: detalleError(error) });
     }
 };
 
@@ -74,7 +75,7 @@ const borrarProyecto = async (req, res) => {
         res.status(200).json({ mensaje: '🗑️ Proyecto eliminado correctamente' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al borrar el proyecto', error: error.message });
+        res.status(500).json({ mensaje: 'Error al borrar el proyecto', error: detalleError(error) });
     }
 };
 

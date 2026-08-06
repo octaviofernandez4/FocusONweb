@@ -20,7 +20,7 @@ const authMiddleware = (req, res, next) => {
 
         // IMPORTANTE: process.env.JWT_SECRET tiene que ser igual al del Login
 
-        const decodificado = jwt.verify(token, process.env.JWT_SECRET);
+        const decodificado = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ['HS256'] });
 
         // 3. Guardamos los datos del usuario (ID) para que los controladores lo usen
         req.user = decodificado;
