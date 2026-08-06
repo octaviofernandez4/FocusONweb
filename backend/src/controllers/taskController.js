@@ -2,7 +2,9 @@ const Task = require('../models/Task');
 const Membership = require('../models/Membership');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
+const Project = require('../models/Project');
 const { enviarEmailTareaAsignada, enviarEmailAclaracionSolicitada, enviarEmailAclaracionRespondida } = require('../utils/mailer');
+const { detalleError } = require('../utils/errorResponse');
 
 // La contraseña de aplicación de Gmail tiene select:false en el modelo — hay
 // que pedirla explícitamente con "+" para poder armar el transporter del mail.
@@ -34,6 +36,12 @@ const crearTarea = async (req, res) => {
         // "project" puede venir como ID crudo o como objeto populado ({_id, name, color});
         // es opcional — una tarea sin proyecto asignado es válida (aparece solo en "Todas").
         const proyecto = project && typeof project === 'object' ? project._id : (project || null);
+        if (proyecto) {
+            const proyectoValido = await Project.exists({ _id: proyecto, org: req.orgId });
+            if (!proyectoValido) {
+                return res.status(400).json({ mensaje: 'Ese proyecto no pertenece a tu organización 🛑' });
+            }
+        }
 
         let assignedTo = null;
         let miembroAsignado = null;
@@ -79,7 +87,7 @@ const crearTarea = async (req, res) => {
         res.status(201).json({ mensaje: '✅ Tarea creada con éxito', tarea: nuevaTarea });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: '❌ Error al crear la tarea', error: error.message });
+        res.status(500).json({ mensaje: '❌ Error al crear la tarea', error: detalleError(error) });
     }
 };
 
@@ -103,7 +111,7 @@ const obtenerTareas = async (req, res) => {
         res.status(200).json(tareas);
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al obtener las tareas', error: error.message });
+        res.status(500).json({ mensaje: 'Error al obtener las tareas', error: detalleError(error) });
     }
 };
 
@@ -130,7 +138,7 @@ const obtenerEstadisticasTareas = async (req, res) => {
         res.status(200).json({ totalCompleted, completedThisWeek, missedCount, completionRate });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al obtener las estadísticas', error: error.message });
+        res.status(500).json({ mensaje: 'Error al obtener las estadísticas', error: detalleError(error) });
     }
 };
 
@@ -149,7 +157,16 @@ const actualizarTarea = async (req, res) => {
         if (title !== undefined) tarea.title = title;
         if (description !== undefined) tarea.description = description;
         if (estimatedHours !== undefined) tarea.estimatedHours = estimatedHours || null;
-        if (project !== undefined) tarea.project = project && typeof project === 'object' ? project._id : (project || null);
+        if (project !== undefined) {
+            const proyectoId = project && typeof project === 'object' ? project._id : (project || null);
+            if (proyectoId) {
+                const proyectoValido = await Project.exists({ _id: proyectoId, org: req.orgId });
+                if (!proyectoValido) {
+                    return res.status(400).json({ mensaje: 'Ese proyecto no pertenece a tu organización 🛑' });
+                }
+            }
+            tarea.project = proyectoId;
+        }
         if (priority !== undefined) tarea.priority = priority;
         if (attachments !== undefined) tarea.attachments = attachments;
 
@@ -334,7 +351,7 @@ const actualizarTarea = async (req, res) => {
         res.status(200).json({ mensaje: '✏️ Tarea actualizada con éxito', tarea });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al actualizar la tarea', error: error.message });
+        res.status(500).json({ mensaje: 'Error al actualizar la tarea', error: detalleError(error) });
     }
 };
 
@@ -365,7 +382,7 @@ const borrarTarea = async (req, res) => {
         res.status(200).json({ mensaje: '🗑️ Tarea eliminada correctamente' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ mensaje: 'Error al borrar la tarea', error: error.message });
+        res.status(500).json({ mensaje: 'Error al borrar la tarea', error: detalleError(error) });
     }
 };
 

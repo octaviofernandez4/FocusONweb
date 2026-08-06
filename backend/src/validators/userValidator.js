@@ -11,6 +11,7 @@ const validarRegistro = [
         icloud_remove_subaddress: false
     }),
     check('password', 'La contraseña debe tener al menos 6 caracteres').isLength({ min: 6 }),
+    check('password').isLength({ max: 128 }).withMessage('La contraseña no puede superar los 128 caracteres'),
     check('inviteToken').optional().trim(),
     check('companyName').optional().trim(),
     check('accountType').optional().isIn(['empresa', 'empleado']).withMessage('El tipo de cuenta no es válido'),
@@ -63,6 +64,7 @@ const validarLogin = [
 const validarCambioContrasena = [
     check('currentPassword', 'La contraseña actual es obligatoria').not().isEmpty(),
     check('newPassword', 'La contraseña nueva debe tener al menos 6 caracteres').isLength({ min: 6 }),
+    check('newPassword').isLength({ max: 128 }).withMessage('La contraseña nueva no puede superar los 128 caracteres'),
 
     (req, res, next) => {
         const errors = validationResult(req);
@@ -93,6 +95,7 @@ const validarSolicitarReset = [
 
 const validarResetContrasena = [
     check('newPassword', 'La contraseña nueva debe tener al menos 6 caracteres').isLength({ min: 6 }),
+    check('newPassword').isLength({ max: 128 }).withMessage('La contraseña nueva no puede superar los 128 caracteres'),
 
     (req, res, next) => {
         const errors = validationResult(req);

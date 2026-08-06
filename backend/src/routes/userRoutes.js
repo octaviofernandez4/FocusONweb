@@ -9,6 +9,7 @@ const { validarRegistro, validarLogin, validarActualizacionPerfil, validarCambio
 
 const authMiddleware = require('../middlewares/authMiddleware');
 const authRateLimiter = require('../middlewares/authRateLimiter');
+const accountRateLimiter = require('../middlewares/accountRateLimiter');
 
 // --- RUTAS DE AUTENTICACIÓN ---
 
@@ -18,7 +19,7 @@ router.post('/register', authRateLimiter, validarRegistro, crearUsuario);
 
 // Ruta para Iniciar Sesión (POST a /api/login) [cite: 153]
 // Primero valida los campos y luego genera el token JWT
-router.post('/login', authRateLimiter, validarLogin, loginUsuario);
+router.post('/login', authRateLimiter, accountRateLimiter, validarLogin, loginUsuario);
 
 // Recuperar contraseña sin sesión iniciada — pedir el link y después usarlo.
 router.post('/forgot-password', authRateLimiter, validarSolicitarReset, solicitarResetContrasena);
