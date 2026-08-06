@@ -81,14 +81,17 @@ const loginUsuario = async (req, res) => {
         // 1. Verificamos si existe alguien con ese email
         // password tiene select:false en el modelo — hay que pedirlo explícitamente para poder compararlo.
         const usuario = await User.findOne({ email }).select('+password');
+        // Mismo mensaje tanto si el email no existe como si la contraseña está mal —
+        // si distinguimos, cualquiera podría usar el login para adivinar qué emails
+        // están registrados probando uno por uno.
         if (!usuario) {
-            return res.status(400).json({ mensaje: 'Credenciales inválidas (email no encontrado)' });
+            return res.status(400).json({ mensaje: 'Credenciales inválidas' });
         }
 
         // 2. Comparamos la contraseña que tipeó con el hash guardado en MongoDB
         const passwordCorrecta = await bcrypt.compare(password, usuario.password);
         if (!passwordCorrecta) {
-            return res.status(400).json({ mensaje: 'Credenciales inválidas (contraseña incorrecta)' });
+            return res.status(400).json({ mensaje: 'Credenciales inválidas' });
         }
 
         // 3. Generamos el Token JWT (el Pase VIP)
